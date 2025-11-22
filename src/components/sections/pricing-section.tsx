@@ -1,71 +1,95 @@
 'use client';
 
 import React, { useState } from 'react';
-import { NeuCard } from '@/components/ui/neu-card';
-import { NeuButton } from '@/components/ui/neu-button';
-import { Check } from 'lucide-react';
+import { Check, Users, FileText, Star, ArrowRight } from 'lucide-react';
 
 interface PricingPlan {
   name: string;
   target: string;
   price: string;
-  period: string;
   reports: string;
+  users: string;
   features: string[];
   priceId: string;
   popular?: boolean;
 }
 
-// INFORIA 2.0: Simplified pricing structure
+// INFORIA 2.0: Escalera de Valor - 5 Planes
 const PRICING_PLANS: PricingPlan[] = [
   {
-    name: 'Plan Inicio',
-    target: 'Para empezar',
+    name: 'Esencial',
+    target: 'Solo-preneur (Lite)',
     price: '49€',
-    period: '/mes',
-    reports: '50 informes/mes',
+    reports: '50',
+    users: '1',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_INICIO_PRICE_ID || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_ESENCIAL_PRICE_ID || '',
     features: [
-      '1 Usuario',
-      'Transcripción con IA',
-      'Generación de informes',
+      'Transcripción IA ilimitada',
+      'Plantillas DSM-5/CIE-10',
       'Almacenamiento Google Drive',
-      'Soporte por email',
+      'Soporte Email',
     ],
   },
   {
-    name: 'Plan Profesional',
-    target: 'Más popular',
+    name: 'Dúo',
+    target: 'Socios / Parejas',
     price: '99€',
-    period: '/mes',
-    reports: '150 informes/mes',
-    popular: true,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID || '',
+    reports: '110',
+    users: '2',
+    popular: true, // ⭐ Plan Destacado
+    priceId: process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID || '',
     features: [
-      '2 Usuarios',
-      'Todo del Plan Inicio',
-      'Panel de gestión de equipo',
+      'Todo lo de Esencial',
+      'Panel de Gestión de Equipo',
       'Plantillas personalizadas',
-      'Soporte prioritario',
+      'Soporte Prioritario',
       'Onboarding asistido',
     ],
   },
   {
-    name: 'Plan Clínica',
-    target: 'Equipos en crecimiento',
-    price: '149€',
-    period: '/mes',
-    reports: '300 informes/mes',
+    name: 'Profesional',
+    target: 'Pequeña Consulta',
+    price: '189€',
+    reports: '220',
+    users: '3',
+    popular: false,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID || '',
+    features: [
+      'Todo lo de Dúo',
+      'Roles avanzados',
+      'Analítica básica',
+      'Panel de estadísticas',
+    ],
+  },
+  {
+    name: 'Clínica',
+    target: 'Equipos en Crecimiento',
+    price: '299€',
+    reports: '400',
+    users: '4',
     popular: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || '',
     features: [
-      '4 Usuarios',
-      'Todo del Plan Profesional',
-      'Gestión de roles avanzada',
-      'Panel de estadísticas',
+      'Todo lo de Profesional',
       'API de integración',
+      'Gestor de cuenta dedicado',
       'Contrato personalizado',
+    ],
+  },
+  {
+    name: 'Centro',
+    target: 'Instituciones',
+    price: '450€',
+    reports: '650',
+    users: '5',
+    popular: false,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID || '',
+    features: [
+      'Todo lo de Clínica',
+      'SLA Garantizado',
+      'Formación dedicada',
+      'Soporte 24/7',
     ],
   },
 ];
@@ -106,93 +130,134 @@ export function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-20 px-4 bg-inforia-cream">
+    <section id="pricing" className="py-24 px-4 bg-background">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-4xl md:text-5xl font-bold text-inforia-green">
-            Planes y Precios
+            Escalera de Valor INFORIA
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Elige el plan perfecto para tu práctica. Cancela cuando quieras.
+            Elige el plan que se adapta a tu volumen actual. Cambia cuando crezcas.
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {/* Grid de 5 Planes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-[1400px] mx-auto mb-16">
           {PRICING_PLANS.map((plan) => (
-            <NeuCard
+            <div
               key={plan.name}
-              className={`relative p-8 space-y-6 flex flex-col h-full transition-all duration-300 ${plan.popular
-                  ? 'md:scale-105 ring-2 ring-inforia-green shadow-[5px_5px_15px_#d1cfcc,-5px_-5px_15px_#ffffff]'
-                  : 'shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]'
-                }`}
+              className={`
+                relative rounded-3xl p-6 bg-background transition-all duration-300
+                ${plan.popular
+                  ? 'border-2 border-inforia-green lg:scale-105 z-10 shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]'
+                  : 'border border-gray-200 hover:scale-[1.02] shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]'
+                }
+                hover:shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]
+              `}
             >
               {/* Popular Badge */}
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-inforia-burgundy text-white px-4 py-1 rounded-full text-sm font-semibold shadow-md">
-                    ⭐ Más Popular
-                  </span>
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-inforia-green text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5">
+                  <Star className="w-3 h-3 fill-current" />
+                  Más Popular
                 </div>
               )}
 
-              {/* Plan Header */}
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-inforia-green">{plan.name}</h3>
-                <p className="text-sm text-gray-500">{plan.target}</p>
-              </div>
-
-              {/* Price */}
-              <div className="py-4 border-y border-gray-200">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-inforia-green">{plan.price}</span>
-                  <span className="text-gray-500">{plan.period}</span>
+              <div className="space-y-5">
+                {/* Badge Target */}
+                <div className="inline-block px-3 py-1 rounded-lg bg-inforia-green/5 text-inforia-green text-xs font-bold uppercase tracking-wide">
+                  {plan.target}
                 </div>
-                <p className="text-sm text-gray-500 mt-2">{plan.reports}</p>
+
+                {/* Plan Name */}
+                <div>
+                  <h3 className="font-bold text-2xl text-gray-800">{plan.name}</h3>
+                  <div className="flex items-baseline mt-2">
+                    <span className="font-bold text-4xl text-inforia-green">{plan.price}</span>
+                    <span className="text-gray-500 ml-1 text-sm">/mes</span>
+                  </div>
+                </div>
+
+                {/* Métricas Clave */}
+                <div className="space-y-2 py-4 border-y border-gray-200">
+                  <div className="flex items-center gap-2 text-inforia-burgundy font-bold text-sm">
+                    <FileText className="w-4 h-4" />
+                    <span>{plan.reports} Informes</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600 text-sm">
+                    <Users className="w-4 h-4" />
+                    <span>{plan.users} {parseInt(plan.users) === 1 ? 'Usuario' : 'Usuarios'}</span>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-2.5">
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-xs text-gray-600">
+                      <Check className="w-3.5 h-3.5 text-inforia-green mt-0.5 shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA Button - Neumórfico */}
+                <button
+                  onClick={() => handleCheckout(plan.priceId)}
+                  disabled={isLoading === plan.priceId}
+                  className={`
+                    w-full py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300
+                    shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff]
+                    hover:translate-y-[1px]
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    ${plan.popular
+                      ? 'bg-inforia-green text-white hover:bg-inforia-green/90'
+                      : 'bg-background text-inforia-green border-2 border-inforia-green hover:bg-gray-50'
+                    }
+                  `}
+                >
+                  {isLoading === plan.priceId ? 'Procesando...' : 'Seleccionar'}
+                </button>
+
+                <p className="text-[10px] text-gray-500 text-center">
+                  14 días gratis. Sin tarjeta.
+                </p>
               </div>
-
-              {/* Features */}
-              <ul className="space-y-3 flex-grow">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-inforia-green flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA Button */}
-              <NeuButton
-                variant={plan.popular ? 'primary' : 'accent'}
-                size="lg"
-                className="w-full mt-auto"
-                onClick={() => handleCheckout(plan.priceId)}
-                disabled={isLoading === plan.priceId}
-              >
-                {isLoading === plan.priceId ? 'Procesando...' : 'Comenzar Prueba Gratis'}
-              </NeuButton>
-
-              <p className="text-xs text-gray-500 text-center">
-                14 días gratis. No requiere tarjeta de crédito.
-              </p>
-            </NeuCard>
+            </div>
           ))}
         </div>
 
-        {/* Enterprise CTA */}
-        <div className="mt-16 text-center">
-          <NeuCard className="max-w-2xl mx-auto p-8">
-            <h3 className="text-2xl font-bold text-inforia-green mb-4">
-              ¿Necesitas un plan personalizado?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Contacta con nosotros para soluciones empresariales con más de 5 usuarios.
-            </p>
-            <NeuButton variant="ghost" size="lg">
+        {/* Plan Enterprise - Neumórfico Inverso */}
+        <div className="max-w-4xl mx-auto">
+          <div
+            className="rounded-3xl bg-background p-8 
+              shadow-[inset_5px_5px_10px_#d1cfcc,inset_-5px_-5px_10px_#ffffff] 
+              flex flex-col md:flex-row items-center justify-between gap-6 
+              border border-white/50"
+          >
+            <div className="space-y-2 text-center md:text-left">
+              <h3 className="font-bold text-2xl text-gray-800">
+                ¿Necesitas más de 650 informes?
+              </h3>
+              <p className="text-gray-600">
+                Diseñamos un plan a medida para grandes redes de clínicas.
+              </p>
+            </div>
+            <button
+              onClick={() => window.location.href = '#contact'}
+              className="
+                px-8 py-3 rounded-xl bg-inforia-burgundy text-white font-bold text-sm
+                shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]
+                hover:shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]
+                hover:bg-inforia-burgundy/90 transition-all duration-300
+                flex items-center gap-2
+              "
+            >
               Contactar Ventas
-            </NeuButton>
-          </NeuCard>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </section>
