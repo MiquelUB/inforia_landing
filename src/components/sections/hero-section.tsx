@@ -24,9 +24,6 @@ export function HeroSection() {
             >
               Demo Gratis
             </NeuButton>
-            <NeuButton variant="ghost" size="lg" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>
-              Ver Precios
-            </NeuButton>
           </div>
         </div>
 

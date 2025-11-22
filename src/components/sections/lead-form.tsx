@@ -3,13 +3,44 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 
+// Helper function to validate URL
+const isValidUrl = (url: string): boolean => {
+    if (!url) return true; // Empty is valid (optional field)
+    try {
+        const urlObj = new URL(url);
+        return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+        return false;
+    }
+};
+
 export function LeadForm() {
-    const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', web: '' });
+    const [errors, setErrors] = useState({ name: '', email: '', web: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate form data
+        const newErrors = { name: '', email: '', web: '' };
+
+        if (formData.name.trim().length < 3) {
+            newErrors.name = 'El nombre debe tener al menos 3 caracteres';
+        }
+
+        if (formData.web && !isValidUrl(formData.web)) {
+            newErrors.web = 'Por favor, introduce una URL válida (ej: https://tusitio.com)';
+        }
+
+        if (newErrors.name || newErrors.web) {
+            setErrors(newErrors);
+            return;
+        }
+
+        // Clear errors if validation passes
+        setErrors({ name: '', email: '', web: '' });
         setIsSubmitting(true);
 
         // TODO: Integrar con tu backend/CRM
@@ -63,11 +94,18 @@ export function LeadForm() {
                             type="text"
                             id="name"
                             required
+                            minLength={3}
                             value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            onChange={(e) => {
+                                setFormData({ ...formData, name: e.target.value });
+                                if (errors.name) setErrors({ ...errors, name: '' });
+                            }}
                             className="w-full px-4 py-3 rounded-xl bg-background shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff] border-none focus:outline-none focus:ring-2 focus:ring-inforia-green/20 text-gray-800"
                             placeholder="Dr. Juan Pérez"
                         />
+                        {errors.name && (
+                            <p className="mt-1 text-sm text-inforia-burgundy">{errors.name}</p>
+                        )}
                     </div>
 
                     {/* Input Email */}
@@ -80,32 +118,44 @@ export function LeadForm() {
                             id="email"
                             required
                             value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            onChange={(e) => {
+                                setFormData({ ...formData, email: e.target.value });
+                                if (errors.email) setErrors({ ...errors, email: '' });
+                            }}
                             className="w-full px-4 py-3 rounded-xl bg-background shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff] border-none focus:outline-none focus:ring-2 focus:ring-inforia-green/20 text-gray-800"
                             placeholder="juan.perez@clinica.com"
                         />
+                        {errors.email && (
+                            <p className="mt-1 text-sm text-inforia-burgundy">{errors.email}</p>
+                        )}
                     </div>
 
-                    {/* Input Teléfono */}
+                    {/* Input Web */}
                     <div>
-                        <label htmlFor="phone" className="block text-sm font-bold text-gray-700 mb-2">
-                            Teléfono (opcional)
+                        <label htmlFor="web" className="block text-sm font-bold text-gray-700 mb-2">
+                            Sitio Web
                         </label>
                         <input
-                            type="tel"
-                            id="phone"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            type="url"
+                            id="web"
+                            value={formData.web}
+                            onChange={(e) => {
+                                setFormData({ ...formData, web: e.target.value });
+                                if (errors.web) setErrors({ ...errors, web: '' });
+                            }}
                             className="w-full px-4 py-3 rounded-xl bg-background shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff] border-none focus:outline-none focus:ring-2 focus:ring-inforia-green/20 text-gray-800"
-                            placeholder="+34 600 000 000"
+                            placeholder="https://tusitio.com"
                         />
+                        {errors.web && (
+                            <p className="mt-1 text-sm text-inforia-burgundy">{errors.web}</p>
+                        )}
                     </div>
 
                     {/* Botón Submit Neumórfico */}
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full py-4 rounded-xl font-bold text-white bg-inforia-green shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff] hover:bg-inforia-green/90 active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff] transition-all duration-300 disabled:opacity-50"
+                        className="w-full py-4 rounded-xl font-bold text-inforia-green bg-background shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff] hover:shadow-[3px_3px_6px_#d1cfcc,-3px_-3px_6px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff] transition-all duration-300 disabled:opacity-50"
                     >
                         {isSubmitting ? 'Enviando...' : 'Solicitar Demo Gratis'}
                     </button>

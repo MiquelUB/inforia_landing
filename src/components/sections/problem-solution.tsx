@@ -1,5 +1,4 @@
 import React from 'react';
-import { NeuCard } from '@/components/ui/neu-card';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 export function ProblemSolutionSection() {
@@ -22,7 +21,7 @@ export function ProblemSolutionSection() {
   ];
 
   return (
-    <section id="features" className="py-20 px-4 bg-white">
+    <section id="features" className="py-20 px-4 bg-background">
       <div className="max-w-6xl mx-auto space-y-12">
         <div className="text-center space-y-4">
           <h2 className="text-4xl font-bold text-inforia-green">
@@ -36,7 +35,10 @@ export function ProblemSolutionSection() {
         {/* Comparison Cards */}
         <div className="space-y-6">
           {comparisons.map((item) => (
-            <NeuCard key={item.title} className="p-8">
+            <div
+              key={item.title}
+              className="rounded-3xl bg-background p-8 shadow-[inset_5px_5px_10px_#d1cfcc,inset_-5px_-5px_10px_#ffffff] border border-white/50"
+            >
               <h3 className="text-2xl font-bold text-inforia-green mb-6">
                 {item.title}
               </h3>
@@ -63,7 +65,7 @@ export function ProblemSolutionSection() {
                   </div>
                 </div>
               </div>
-            </NeuCard>
+            </div>
           ))}
         </div>
 
@@ -75,9 +77,12 @@ export function ProblemSolutionSection() {
             '🔒 HIPAA compliant',
             '💰 ROI en 3 meses',
           ].map((benefit) => (
-            <NeuCard key={benefit} className="p-6 text-center">
+            <div
+              key={benefit}
+              className="rounded-3xl bg-background p-6 text-center shadow-[inset_5px_5px_10px_#d1cfcc,inset_-5px_-5px_10px_#ffffff] border border-white/50"
+            >
               <p className="text-lg font-semibold text-inforia-green">{benefit}</p>
-            </NeuCard>
+            </div>
           ))}
         </div>
       </div>

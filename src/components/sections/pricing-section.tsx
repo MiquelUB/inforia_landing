@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Users, FileText, Star, ArrowRight } from 'lucide-react';
+import { Check, Users, FileText, ArrowRight } from 'lucide-react';
 
 interface PricingPlan {
   name: string;
@@ -156,14 +156,6 @@ export function PricingSection() {
                 hover:shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]
               `}
             >
-              {/* Popular Badge */}
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-inforia-green text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5">
-                  <Star className="w-3 h-3 fill-current" />
-                  Más Popular
-                </div>
-              )}
-
               <div className="space-y-5">
                 {/* Badge Target */}
                 <div className="inline-block px-3 py-1 rounded-lg bg-inforia-green/5 text-inforia-green text-xs font-bold uppercase tracking-wide">
@@ -181,7 +173,7 @@ export function PricingSection() {
 
                 {/* Métricas Clave */}
                 <div className="space-y-2 py-4 border-y border-gray-200">
-                  <div className="flex items-center gap-2 text-inforia-burgundy font-bold text-sm">
+                  <div className="flex items-center gap-2 text-inforia-green font-bold text-sm">
                     <FileText className="w-4 h-4" />
                     <span>{plan.reports} Informes</span>
                   </div>
@@ -211,18 +203,11 @@ export function PricingSection() {
                     active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff]
                     hover:translate-y-[1px]
                     disabled:opacity-50 disabled:cursor-not-allowed
-                    ${plan.popular
-                      ? 'bg-inforia-green text-white hover:bg-inforia-green/90'
-                      : 'bg-background text-inforia-green border-2 border-inforia-green hover:bg-gray-50'
-                    }
+                    bg-background text-inforia-green border-2 border-inforia-green hover:bg-gray-50
                   `}
                 >
                   {isLoading === plan.priceId ? 'Procesando...' : 'Seleccionar'}
                 </button>
-
-                <p className="text-[10px] text-gray-500 text-center">
-                  14 días gratis. Sin tarjeta.
-                </p>
               </div>
             </div>
           ))}
@@ -247,10 +232,10 @@ export function PricingSection() {
             <button
               onClick={() => window.location.href = '#contact'}
               className="
-                px-8 py-3 rounded-xl bg-inforia-burgundy text-white font-bold text-sm
+                px-8 py-3 rounded-xl bg-background text-inforia-green border-2 border-inforia-green font-bold text-sm
                 shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]
                 hover:shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]
-                hover:bg-inforia-burgundy/90 transition-all duration-300
+                hover:bg-gray-50 transition-all duration-300
                 flex items-center gap-2
               "
             >
