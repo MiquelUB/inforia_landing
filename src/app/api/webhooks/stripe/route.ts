@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-12-18.acacia' as any,
+    typescript: true,
 });
 
 // Cliente Supabase ADMIN (ignora RLS para poder escribir)
@@ -40,13 +40,13 @@ export async function POST(req: Request) {
         });
         const lineItems = sessionWithLineItems.line_items?.data || [];
         const priceId = lineItems[0]?.price?.id;
-        const userEmail = session.customer_email || session.customer_details?.email;
+        const customerEmail = session.customer_email || session.customer_details?.email;
         const amountTotal = session.amount_total || 0;
         const amountDiscount = session.total_details?.amount_discount || 0;
 
-        console.log(`📊 Detalles: Email=${userEmail}, PriceID=${priceId}, Total=€${amountTotal / 100}, Descuento=€${amountDiscount / 100}`);
+        console.log(`📊 Detalles: Email=${customerEmail}, PriceID=${priceId}, Total=€${amountTotal / 100}, Descuento=€${amountDiscount / 100}`);
 
-        if (userEmail && priceId) {
+        if (customerEmail && priceId) {
             let credits = 0;
             let planName = 'unknown';
 
@@ -72,34 +72,71 @@ export async function POST(req: Request) {
             }
 
             if (credits > 0) {
-                console.log(`💳 Asignando ${credits} créditos a ${userEmail} (${planName})`);
+                console.log(`💳 Asignando ${credits} créditos a ${customerEmail} (${planName})`);
 
-                // Guardar en Supabase (Tabla 'profiles')
-                // Usamos upsert para crear si no existe o actualizar si ya existe
-                const { error } = await supabaseAdmin
-                    .from('profiles') // Asegúrate que tu tabla se llama así
-                    .upsert({
-                        email: userEmail,
-                        credits_limit: credits, // O sumar si quisieras acumular
-                        plan_type: planName,
-                        stripe_customer_id: session.customer,
-                        stripe_session_id: session.id,
-                        amount_paid: amountTotal,
-                        amount_discount: amountDiscount,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'email' });
+                // ========================================
+                // CORRECCIÓN CRÍTICA: Pre-creación de usuario en Auth
+                // ========================================
 
-                if (error) {
-                    console.error('❌ Error guardando en Supabase:', error);
-                    return new NextResponse('Database Error', { status: 500 });
+                // 1. Verificar si existe el usuario en Auth
+                const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
+                const existingAuthUser = users.find(u => u.email === customerEmail);
+
+                let userId = existingAuthUser?.id;
+
+                // 2. Si no existe, lo creamos "fantasma" para reservar el ID y el Email
+                if (!userId) {
+                    console.log(`👤 Usuario ${customerEmail} no existe en Auth. Creando usuario...`);
+
+                    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                        email: customerEmail,
+                        email_confirm: true, // Importante: lo marcamos confirmado para que Google entre directo
+                        user_metadata: {
+                            full_name: session.customer_details?.name || 'Usuario INFORIA',
+                            source: 'stripe_webhook'
+                        }
+                    });
+
+                    if (createError) {
+                        console.error("❌ Error creando usuario auth:", createError);
+                        return new NextResponse('Error creating user in auth', { status: 500 });
+                    }
+
+                    userId = newUser.user?.id;
+                    console.log(`✅ Usuario creado en Auth con ID: ${userId}`);
                 }
 
-                console.log(`✅ Usuario ${userEmail} actualizado con ${credits} créditos (Plan: ${planName})`);
+                // 3. Ahora sí, guardamos los créditos vinculados a ese userId
+                if (userId) {
+                    const { error } = await supabaseAdmin
+                        .from('profiles')
+                        .upsert({
+                            id: userId, // Vinculamos explícitamente con el ID de Auth
+                            email: customerEmail,
+                            credits_limit: credits,
+                            plan_type: planName,
+                            stripe_customer_id: session.customer,
+                            stripe_session_id: session.id,
+                            amount_paid: amountTotal,
+                            amount_discount: amountDiscount,
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'id' }); // Cambiar conflicto de 'email' a 'id'
+
+                    if (error) {
+                        console.error('❌ Error guardando en Supabase:', error);
+                        return new NextResponse('Database Error', { status: 500 });
+                    }
+
+                    console.log(`✅ Usuario ${customerEmail} actualizado con ${credits} créditos (Plan: ${planName})`);
+                } else {
+                    console.error('❌ No se pudo obtener userId');
+                    return new NextResponse('User ID not found', { status: 500 });
+                }
             } else {
                 console.warn(`⚠️ No se pudo determinar créditos para priceId: ${priceId}`);
             }
         } else {
-            console.warn(`⚠️ Falta email o priceId. Email: ${userEmail}, PriceID: ${priceId}`);
+            console.warn(`⚠️ Falta email o priceId. Email: ${customerEmail}, PriceID: ${priceId}`);
         }
     }
 

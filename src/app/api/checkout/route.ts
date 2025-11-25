@@ -28,40 +28,31 @@ export async function POST(request: NextRequest) {
 
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY no configurada');
+      throw new Error('STRIPE_SECRET_KEY no configurada en variables de entorno');
     }
 
+    // 1. CORRECCIÓN: Usamos la versión estable por defecto para evitar errores
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2024-12-18.acacia' as any, // Versión estable
       typescript: true,
     });
 
-    // --- CORRECCIÓN DE LA CAUSA 1 ---
-    // 1. Si definimos NEXT_PUBLIC_URL en Vercel, usa esa (la más segura).
-    // 2. Si no, intenta leer la cabecera 'origin'.
-    // 3. Si todo falla, usa explícitamente tu dominio real 'https://inforia.pro'.
-    // 4. Solo usa localhost si estamos en desarrollo.
-    const productionUrl = 'https://inforia.pro';
-    
-    let origin = request.headers.get('origin');
-    
-    if (process.env.NODE_ENV === 'production') {
-      // En producción FORZAMOS tu dominio real o la variable de entorno
-      origin = process.env.NEXT_PUBLIC_URL || productionUrl;
-    } else {
-      // En local, nos vale localhost
-      origin = origin || 'http://localhost:3000';
-    }
-    // --------------------------------
+    // 2. CORRECCIÓN CRÍTICA: Definición robusta del dominio de retorno
+    // Esto soluciona el error 500 al evitar 'localhost' en producción
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    const host = request.headers.get('host') || 'inforia.pro';
+    const origin = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`;
+
+    console.log(`[Checkout] Iniciando sesión para: ${validatedData.email} | Origen: ${origin}`);
 
     let discounts = undefined;
+    // Lógica del Cupón Flash
     if (
-      validatedData.promoCode === 'FLASH5' && 
+      validatedData.promoCode === 'FLASH5' &&
       validatedData.priceId === process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID
     ) {
-       if (process.env.STRIPE_COUPON_FLASH_ID) {
-         discounts = [{ coupon: process.env.STRIPE_COUPON_FLASH_ID }];
-       }
+      if (process.env.STRIPE_COUPON_FLASH_ID) {
+        discounts = [{ coupon: process.env.STRIPE_COUPON_FLASH_ID }];
+      }
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -72,10 +63,9 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      mode: 'subscription', 
+      mode: 'subscription', // Asegúrate de que en Stripe este precio sea recurrente, si es pago único usa 'payment'
       discounts: discounts,
       allow_promotion_codes: !discounts,
-      // Aquí usamos la variable 'origin' ya corregida
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?canceled=true`,
       customer_email: validatedData.email,
@@ -90,11 +80,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, url: session.url, sessionId: session.id });
 
   } catch (error: any) {
-    console.error('❌ Error detallado:', error);
+    console.error('❌ Error crítico en checkout:', error);
     return NextResponse.json(
-      { 
+      {
         error: error.message || 'Error interno del servidor',
-        code: error.code 
+        code: error.code
       },
       { status: 500 }
     );
