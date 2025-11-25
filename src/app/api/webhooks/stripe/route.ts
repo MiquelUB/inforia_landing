@@ -4,7 +4,8 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { Resend } from 'resend';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Evitamos error en build si falta la API Key
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy123456789', {
   typescript: true,
 });
 
