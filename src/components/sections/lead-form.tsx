@@ -43,11 +43,36 @@ export function LeadForm() {
         setErrors({ name: '', email: '', web: '' });
         setIsSubmitting(true);
 
-        // TODO: Integrar con tu backend/CRM
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            console.log('Enviando datos:', { name: formData.name, email: formData.email, role: formData.web });
 
-        setIsSubmitted(true);
-        setIsSubmitting(false);
+            const response = await fetch('/api/lead-magnet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    role: formData.web || 'No especificado',
+                }),
+            });
+
+            console.log('Respuesta recibida:', response.status, response.statusText);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Datos de respuesta:', data);
+                setIsSubmitted(true);
+            } else {
+                const errorData = await response.json();
+                console.error('Error de API:', errorData);
+                throw new Error(errorData.error || 'Error al enviar');
+            }
+        } catch (error) {
+            console.error('Error capturado:', error);
+            setErrors({ ...errors, email: 'Error al enviar. Intenta de nuevo.' });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (isSubmitted) {

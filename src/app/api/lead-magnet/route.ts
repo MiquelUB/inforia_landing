@@ -17,16 +17,21 @@ export async function POST(request: NextRequest) {
     // Validar datos con Zod
     const validatedData = LeadMagnetSchema.parse(body);
 
-    // Obtener el webhook URL de Make.com desde variables de entorno
-    const makeWebhookUrl = process.env.MAKE_WEBHOOK_LEAD;
+    // URL del Webhook de Make.com (Actualizada para Demo)
+    const makeWebhookUrl = "https://hook.eu2.make.com/6w8ubhn2d92b7fx4s795ry5euccslbdm";
 
-    if (!makeWebhookUrl) {
-      console.error('MAKE_WEBHOOK_LEAD no está configurado');
-      return NextResponse.json(
-        { error: 'Configuración del servidor incompleta' },
-        { status: 500 }
-      );
-    }
+    /* 
+    // Anteriormente usábamos variable de entorno, pero estaba desactualizada
+    const makeWebhookUrl = process.env.MAKE_WEBHOOK_LEAD;
+    if (!makeWebhookUrl) { ... } 
+    */
+
+    console.log('🚀 Enviando a Make.com:', makeWebhookUrl);
+    console.log('📦 Payload:', {
+      ...validatedData,
+      timestamp: new Date().toISOString(),
+      source: 'landing-page',
+    });
 
     // Enviar datos al webhook de Make.com
     const makeResponse = await fetch(makeWebhookUrl, {
@@ -41,13 +46,19 @@ export async function POST(request: NextRequest) {
       }),
     });
 
+    console.log('✅ Respuesta de Make:', makeResponse.status, makeResponse.statusText);
+
     if (!makeResponse.ok) {
-      console.error(`Error en Make.com: ${makeResponse.statusText}`);
+      const errorText = await makeResponse.text();
+      console.error(`❌ Error en Make.com: ${makeResponse.statusText}`, errorText);
       return NextResponse.json(
         { error: 'Error al procesar la solicitud' },
         { status: 500 }
       );
     }
+
+    const makeData = await makeResponse.text();
+    console.log('📥 Datos de Make:', makeData);
 
     return NextResponse.json(
       {
