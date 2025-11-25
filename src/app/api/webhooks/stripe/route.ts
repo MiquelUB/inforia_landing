@@ -1,17 +1,11 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase-admin"; // Importamos nuestro cliente admin
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     typescript: true,
 });
-
-// Cliente Supabase ADMIN (ignora RLS para poder escribir)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -24,116 +18,121 @@ export async function POST(req: Request) {
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (error: any) {
-        console.error(`❌ Webhook Error: ${error.message}`);
+        console.error(`❌ Error de Firma Webhook: ${error.message}`);
         return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
     }
 
-    // Cuando el pago (incluso de 0€) es exitoso
+    // Solo nos interesa cuando el pago (o registro gratuito) se completa
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
+        console.log(`🔔 Pago recibido: ${session.id}`);
 
-        console.log(`🎯 Procesando checkout.session.completed: ${session.id}`);
-
-        // Expandir line_items para ver qué compró
-        const sessionWithLineItems = await stripe.checkout.sessions.retrieve(session.id, {
-            expand: ['line_items'],
+        // Recuperar líneas de pedido para saber qué plan es
+        const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+            expand: ['line_items']
         });
-        const lineItems = sessionWithLineItems.line_items?.data || [];
+        const lineItems = expandedSession.line_items?.data || [];
         const priceId = lineItems[0]?.price?.id;
-        const customerEmail = session.customer_email || session.customer_details?.email;
-        const amountTotal = session.amount_total || 0;
-        const amountDiscount = session.total_details?.amount_discount || 0;
 
-        console.log(`📊 Detalles: Email=${customerEmail}, PriceID=${priceId}, Total=€${amountTotal / 100}, Descuento=€${amountDiscount / 100}`);
+        // Datos del cliente
+        const customerEmail = session.customer_email || session.customer_details?.email;
+        const customerName = session.customer_details?.name || '';
 
         if (customerEmail && priceId) {
-            let credits = 0;
-            let planName = 'unknown';
+            // --- LÓGICA DE ASIGNACIÓN DE CRÉDITOS ---
+            let creditsToAdd = 0;
+            let planType = 'free';
 
-            // Lógica de asignación según el producto comprado
+            // Mapa de planes (Asegúrate que coinciden con tus variables de entorno)
             if (priceId === process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID) {
-                credits = 5; // Los 5 del pack de bienvenida
-                planName = 'plan_flash_promo';
+                creditsToAdd = 5;
+                planType = 'promo_flash';
             } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_ESENCIAL_PRICE_ID) {
-                credits = 50;
-                planName = 'esencial';
+                creditsToAdd = 50;
+                planType = 'esencial';
             } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID) {
-                credits = 110;
-                planName = 'duo';
+                creditsToAdd = 110;
+                planType = 'duo';
             } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID) {
-                credits = 220;
-                planName = 'profesional';
+                creditsToAdd = 220;
+                planType = 'profesional';
             } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID) {
-                credits = 400;
-                planName = 'clinica';
+                creditsToAdd = 400;
+                planType = 'clinica';
             } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID) {
-                credits = 650;
-                planName = 'centro';
+                creditsToAdd = 650;
+                planType = 'centro';
             }
 
-            if (credits > 0) {
-                console.log(`💳 Asignando ${credits} créditos a ${customerEmail} (${planName})`);
+            console.log(`📦 PLAN DETECTADO: ${planType} (+${creditsToAdd} créditos)`);
 
-                // ========================================
-                // CORRECCIÓN CRÍTICA: Pre-creación de usuario en Auth
-                // ========================================
-
-                // 1. Verificar si existe el usuario en Auth
+            try {
+                // 1. GESTIÓN DE USUARIO (AUTH)
+                // Buscamos si el usuario ya existe en Supabase Auth
                 const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
-                const existingAuthUser = users.find(u => u.email === customerEmail);
+                const existingUser = users.find(u => u.email === customerEmail);
 
-                let userId = existingAuthUser?.id;
+                let userId = existingUser?.id;
 
-                // 2. Si no existe, lo creamos "fantasma" para reservar el ID y el Email
+                // Si NO existe, lo creamos "silenciosamente"
                 if (!userId) {
-                    console.log(`👤 Usuario ${customerEmail} no existe en Auth. Creando usuario...`);
-
+                    console.log(`👤 Creando nuevo usuario para: ${customerEmail}`);
                     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
                         email: customerEmail,
-                        email_confirm: true, // Importante: lo marcamos confirmado para que Google entre directo
-                        user_metadata: {
-                            full_name: session.customer_details?.name || 'Usuario INFORIA',
-                            source: 'stripe_webhook'
-                        }
+                        email_confirm: true, // ¡Vital! Lo marcamos confirmado para que no pida verificar email
+                        user_metadata: { full_name: customerName }
+                        // No ponemos password, así el usuario usará "Login con Google" o "Magic Link"
                     });
 
-                    if (createError) {
-                        console.error("❌ Error creando usuario auth:", createError);
-                        return new NextResponse('Error creating user in auth', { status: 500 });
-                    }
-
+                    if (createError) throw createError;
                     userId = newUser.user?.id;
                     console.log(`✅ Usuario creado en Auth con ID: ${userId}`);
+                } else {
+                    console.log(`👤 Usuario existente encontrado: ${userId}`);
                 }
 
-                // 3. Ahora sí, guardamos los créditos vinculados a ese userId
-                if (userId) {
-                    const { error } = await supabaseAdmin
+                // 2. GESTIÓN DE PERFIL (BASE DE DATOS)
+                if (userId && creditsToAdd > 0) {
+                    // Verificamos si ya tiene perfil
+                    const { data: profile } = await supabaseAdmin
+                        .from('profiles')
+                        .select('credits_limit')
+                        .eq('id', userId)
+                        .single();
+
+                    const currentCredits = profile?.credits_limit || 0;
+                    const newTotalCredits = currentCredits + creditsToAdd;
+
+                    console.log(`💳 Créditos actuales: ${currentCredits} | Añadiendo: ${creditsToAdd} | Total: ${newTotalCredits}`);
+
+                    // Actualizamos o creamos el perfil
+                    const { error: upsertError } = await supabaseAdmin
                         .from('profiles')
                         .upsert({
-                            id: userId, // Vinculamos explícitamente con el ID de Auth
+                            id: userId, // Vinculamos con el ID de Auth
                             email: customerEmail,
-                            credits_limit: credits,
-                            plan_type: planName,
-                            stripe_customer_id: session.customer,
+                            full_name: customerName,
+                            credits_limit: newTotalCredits, // Sumamos créditos (acumulativo)
+                            plan_type: planType,
+                            stripe_customer_id: session.customer as string,
                             stripe_session_id: session.id,
-                            amount_paid: amountTotal,
-                            amount_discount: amountDiscount,
+                            amount_paid: session.amount_total || 0,
+                            amount_discount: session.total_details?.amount_discount || 0,
                             updated_at: new Date().toISOString()
-                        }, { onConflict: 'id' }); // Cambiar conflicto de 'email' a 'id'
+                        }, { onConflict: 'id' });
 
-                    if (error) {
-                        console.error('❌ Error guardando en Supabase:', error);
-                        return new NextResponse('Database Error', { status: 500 });
-                    }
+                    if (upsertError) throw upsertError;
 
-                    console.log(`✅ Usuario ${customerEmail} actualizado con ${credits} créditos (Plan: ${planName})`);
-                } else {
-                    console.error('❌ No se pudo obtener userId');
-                    return new NextResponse('User ID not found', { status: 500 });
+                    console.log(`✅ ÉXITO: Usuario ${customerEmail} actualizado. Saldo total: ${newTotalCredits} créditos`);
+                } else if (creditsToAdd === 0) {
+                    console.warn(`⚠️ No se asignaron créditos para el priceId: ${priceId}`);
                 }
-            } else {
-                console.warn(`⚠️ No se pudo determinar créditos para priceId: ${priceId}`);
+
+            } catch (err: any) {
+                console.error('❌ Error procesando usuario en Supabase:', err.message);
+                console.error('Stack:', err);
+                // No devolvemos error 500 a Stripe para evitar reintentos infinitos si es un error lógico
+                // pero lo logueamos para revisarlo.
             }
         } else {
             console.warn(`⚠️ Falta email o priceId. Email: ${customerEmail}, PriceID: ${priceId}`);
