@@ -28,6 +28,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('🚀 Enviando a Make.com:', makeWebhookUrl);
+    console.log('📦 Payload:', {
+      ...validatedData,
+      timestamp: new Date().toISOString(),
+      source: 'landing-page',
+    });
+
     // Enviar datos al webhook de Make.com
     const makeResponse = await fetch(makeWebhookUrl, {
       method: 'POST',
@@ -41,13 +48,19 @@ export async function POST(request: NextRequest) {
       }),
     });
 
+    console.log('✅ Respuesta de Make:', makeResponse.status, makeResponse.statusText);
+
     if (!makeResponse.ok) {
-      console.error(`Error en Make.com: ${makeResponse.statusText}`);
+      const errorText = await makeResponse.text();
+      console.error(`❌ Error en Make.com: ${makeResponse.statusText}`, errorText);
       return NextResponse.json(
         { error: 'Error al procesar la solicitud' },
         { status: 500 }
       );
     }
+
+    const makeData = await makeResponse.text();
+    console.log('📥 Datos de Make:', makeData);
 
     return NextResponse.json(
       {

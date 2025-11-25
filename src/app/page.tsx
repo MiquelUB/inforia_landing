@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Header } from '@/components/sections/header';
 import { HeroSection } from '@/components/sections/hero-section';
 import { LeadForm } from '@/components/sections/lead-form';
@@ -6,6 +7,7 @@ import { ProblemSolutionSection } from '@/components/sections/problem-solution';
 import { PricingSection } from '@/components/sections/pricing-section';
 import { FAQSection } from '@/components/sections/faq-section';
 import { Footer } from '@/components/sections/footer';
+import { PromoActivator } from '@/components/promo-activator';
 
 export const metadata = {
   title: 'INFORIA - IA para Psicólogos',
@@ -16,6 +18,11 @@ export const metadata = {
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
+      {/* Activador de promociones (invisible) */}
+      <Suspense fallback={null}>
+        <PromoActivator />
+      </Suspense>
+
       <Header />
       <HeroSection />
       <LeadForm />

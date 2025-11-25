@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -20,8 +21,8 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold">Empresa</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/" className="text-inforia-green hover:text-inforia-cream transition">Blog</a></li>
-              <li><a href="/sobre-nosotros" className="text-inforia-green hover:text-inforia-cream transition">Sobre Nosotros</a></li>
+              <li><Link href="/" className="text-inforia-green hover:text-inforia-cream transition">Blog</Link></li>
+              <li><Link href="/sobre-nosotros" className="text-inforia-green hover:text-inforia-cream transition">Sobre Nosotros</Link></li>
               <li><a href="mailto:inforia@inforia.pro" className="text-inforia-green hover:text-inforia-cream transition">Contacto</a></li>
             </ul>
           </div>
@@ -30,9 +31,9 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold">Legal</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/privacidad" className="text-inforia-green hover:text-inforia-cream transition">Privacidad</a></li>
-              <li><a href="/terminos" className="text-inforia-green hover:text-inforia-cream transition">Términos</a></li>
-              <li><a href="/seguridad" className="text-inforia-green hover:text-inforia-cream transition">Seguridad</a></li>
+              <li><Link href="/privacidad" className="text-inforia-green hover:text-inforia-cream transition">Privacidad</Link></li>
+              <li><Link href="/terminos" className="text-inforia-green hover:text-inforia-cream transition">Términos</Link></li>
+              <li><Link href="/seguridad" className="text-inforia-green hover:text-inforia-cream transition">Seguridad</Link></li>
             </ul>
           </div>
         </div>
@@ -45,15 +46,15 @@ export function Footer() {
               © {currentYear} INFORIA. Todos los derechos reservados.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <a href="/" className="text-inforia-green hover:text-inforia-cream transition">
+              <Link href="/" className="text-inforia-green hover:text-inforia-cream transition">
                 Twitter
-              </a>
-              <a href="/" className="text-inforia-green hover:text-inforia-cream transition">
+              </Link>
+              <Link href="/" className="text-inforia-green hover:text-inforia-cream transition">
                 LinkedIn
-              </a>
-              <a href="/" className="text-inforia-green hover:text-inforia-cream transition">
+              </Link>
+              <Link href="/" className="text-inforia-green hover:text-inforia-cream transition">
                 Instagram
-              </a>
+              </Link>
             </div>
           </div>
         </div>

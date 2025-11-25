@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 bg-background border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-[#FBF9F6] backdrop-blur-sm border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center">
@@ -23,7 +23,7 @@ export function Header() {
             Precios
           </a>
           <a href="#faqs" className="text-inforia-green hover:text-inforia-burgundy transition">
-            FAQ's
+            FAQ&apos;s
           </a>
           <a href="#contact" className="text-inforia-green hover:text-inforia-burgundy transition">
             Contacto
