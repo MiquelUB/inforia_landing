@@ -2,15 +2,12 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// Schema de validación para checkout
 const CheckoutSchema = z.object({
   priceId: z.string().min(1, 'El ID de precio es requerido'),
   email: z.string().email('Email inválido').optional(),
+  promoCode: z.string().optional(),
 });
 
-type CheckoutPayload = z.infer<typeof CheckoutSchema>;
-
-// Lista de Price IDs válidos permitidos
 const VALID_PRICE_IDS = [
   process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID,
   process.env.NEXT_PUBLIC_STRIPE_ESENCIAL_PRICE_ID,
@@ -23,38 +20,50 @@ const VALID_PRICE_IDS = [
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-
-    // Validar datos con Zod
     const validatedData = CheckoutSchema.parse(body);
 
-    // Verificar que el priceId sea válido (seguridad contra injection)
     if (!VALID_PRICE_IDS.includes(validatedData.priceId)) {
-      console.error(`⚠️ Intento de checkout con Price ID inválido: ${validatedData.priceId}`);
-      return NextResponse.json(
-        { error: 'Plan no válido o no disponible' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Plan no válido' }, { status: 400 });
     }
 
-    // Inicializar cliente de Stripe
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-
     if (!stripeSecretKey) {
-      console.error('STRIPE_SECRET_KEY no está configurado');
-      return NextResponse.json(
-        { error: 'Configuración del servidor incompleta' },
-        { status: 500 }
-      );
+      throw new Error('STRIPE_SECRET_KEY no configurada');
     }
 
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2024-12-18.acacia' as any, // Versión estable
+      typescript: true,
     });
 
-    // Obtener la URL de origen para las redirecciones
-    const origin = request.headers.get('origin') || 'http://localhost:3000';
+    // --- CORRECCIÓN DE LA CAUSA 1 ---
+    // 1. Si definimos NEXT_PUBLIC_URL en Vercel, usa esa (la más segura).
+    // 2. Si no, intenta leer la cabecera 'origin'.
+    // 3. Si todo falla, usa explícitamente tu dominio real 'https://inforia.pro'.
+    // 4. Solo usa localhost si estamos en desarrollo.
+    const productionUrl = 'https://inforia.pro';
+    
+    let origin = request.headers.get('origin');
+    
+    if (process.env.NODE_ENV === 'production') {
+      // En producción FORZAMOS tu dominio real o la variable de entorno
+      origin = process.env.NEXT_PUBLIC_URL || productionUrl;
+    } else {
+      // En local, nos vale localhost
+      origin = origin || 'http://localhost:3000';
+    }
+    // --------------------------------
 
-    // Crear sesión de Stripe Checkout
+    let discounts = undefined;
+    if (
+      validatedData.promoCode === 'FLASH5' && 
+      validatedData.priceId === process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID
+    ) {
+       if (process.env.STRIPE_COUPON_FLASH_ID) {
+         discounts = [{ coupon: process.env.STRIPE_COUPON_FLASH_ID }];
+       }
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -63,7 +72,10 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      mode: 'subscription',
+      mode: 'subscription', 
+      discounts: discounts,
+      allow_promotion_codes: !discounts,
+      // Aquí usamos la variable 'origin' ya corregida
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?canceled=true`,
       customer_email: validatedData.email,
@@ -71,61 +83,19 @@ export async function POST(request: NextRequest) {
       billing_address_collection: 'auto',
       metadata: {
         source: 'landing-page',
+        promo_campaign: validatedData.promoCode || 'none'
       },
     });
 
-    if (!session.url) {
-      console.error('Session URL no disponible');
-      return NextResponse.json(
-        { error: 'Error al crear sesión de Stripe' },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({ success: true, url: session.url, sessionId: session.id });
 
-    console.log(`✓ Sesión de Stripe creada: ${session.id}`);
-    
+  } catch (error: any) {
+    console.error('❌ Error detallado:', error);
     return NextResponse.json(
-      {
-        success: true,
-        sessionId: session.id,
-        url: session.url,
+      { 
+        error: error.message || 'Error interno del servidor',
+        code: error.code 
       },
-      { status: 200 }
-    );
-  } catch (error) {
-    // Manejo de errores de validación de Zod
-    if (error instanceof z.ZodError) {
-      console.error('❌ Error de validación:', error.issues);
-      return NextResponse.json(
-        {
-          error: 'Datos inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Manejo de errores de Stripe
-    if (error instanceof Stripe.errors.StripeError) {
-      console.error('❌ Error de Stripe:', error.message);
-      
-      // Errores específicos de Stripe
-      if (error.message.includes('No such price')) {
-        return NextResponse.json(
-          { error: 'Price ID no existe en Stripe. Verifica tu configuración.' },
-          { status: 400 }
-        );
-      }
-      
-      return NextResponse.json(
-        { error: 'Error en el procesamiento de pago' },
-        { status: 500 }
-      );
-    }
-
-    console.error('❌ Error en checkout route:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
       { status: 500 }
     );
   }
