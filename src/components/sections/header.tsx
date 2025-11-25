@@ -23,7 +23,7 @@ export function Header() {
             Precios
           </a>
           <a href="#faqs" className="text-inforia-green hover:text-inforia-burgundy transition">
-            FAQ's
+            FAQ&apos;s
           </a>
           <a href="#contact" className="text-inforia-green hover:text-inforia-burgundy transition">
             Contacto

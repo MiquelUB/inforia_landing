@@ -43,7 +43,7 @@ export default function PrivacidadPage() {
 
                     <section className="mb-8">
                         <h2 className="text-2xl font-bold text-inforia-green mb-4">3. Tratamiento de Datos Clínicos (Pacientes)</h2>
-                        <p className="text-gray-700 mb-4">INFORIA funciona con una arquitectura de "Privacidad por Diseño".</p>
+                        <p className="text-gray-700 mb-4">INFORIA funciona con una arquitectura de &quot;Privacidad por Diseño&quot;.</p>
                         <ul className="list-disc list-inside text-gray-700 space-y-2">
                             <li><strong>Soberanía del Dato:</strong> Los informes clínicos y transcripciones generados se almacenan principalmente en <strong>tu propio entorno de Google Drive</strong>. INFORIA actúa como una pasarela de procesamiento seguro.</li>
                             <li><strong>Procesamiento Transitorio:</strong> Los audios y textos enviados a nuestros sistemas de IA se procesan de forma encriptada y no se utilizan para entrenar modelos públicos.</li>

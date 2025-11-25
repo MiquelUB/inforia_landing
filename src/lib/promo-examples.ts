@@ -114,10 +114,10 @@
 // ================================================
 
 // 1. Códigos por Segmento de Usuario
-const SEGMENTED_CODES = {
-    'PSICOLOGO': { plan: 'esencial', discount: 20 },
-    'CLINICA': { plan: 'profesional', discount: 30 },
-    'HOSPITAL': { plan: 'centro', discount: 40 },
+const _SEGMENTED_CODES = {
+  'PSICOLOGO': { plan: 'esencial', discount: 20 },
+  'CLINICA': { plan: 'profesional', discount: 30 },
+  'HOSPITAL': { plan: 'centro', discount: 40 },
 };
 
 // 2. Códigos con Límites

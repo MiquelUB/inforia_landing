@@ -1,8 +1,8 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> { }
+// ✅ FIX: Usamos 'type' en lugar de interfaz vacía para evitar error de linter
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>
 
 const NeuInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
