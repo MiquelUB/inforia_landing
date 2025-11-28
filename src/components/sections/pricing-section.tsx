@@ -85,6 +85,10 @@ function PricingContent() {
 
   const activePlans = [flashPlan, ...standardPlans];
 
+  console.log('[Pricing] Loading:', plansLoading);
+  console.log('[Pricing] Flash Plan ID:', FLASH_PLAN_BASE.priceId);
+  console.log('[Pricing] Active Plans:', activePlans);
+
   const handleCheckout = async (plan: PricingPlan) => {
     if (!plan.priceId) {
       alert('Error de configuración: Plan no disponible.');
