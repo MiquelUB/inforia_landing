@@ -1,120 +1,40 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import { Check, Users, FileText, ArrowRight, Gift, Sparkles } from 'lucide-react';
+import { Check, Users, Gift, Sparkles, Loader2, ArrowRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { usePrices } from '@/hooks/use-prices';
 
 interface PricingPlan {
   name: string;
   target: string;
   price: string;
-  originalPrice?: string; // Para tachar precios
+  originalPrice?: string;
   reports: string;
   users: string;
   features: string[];
   priceId: string;
   popular?: boolean;
-  isPromo?: boolean; // Para destacar la oferta flash
+  isPromo?: boolean;
 }
 
-// 1. Definimos el Plan Flash (Oculto por defecto)
-const FLASH_PLAN: PricingPlan = {
-  name: 'Pack Bienvenida',
-  target: 'Oferta Especial Email',
-  price: '0€',
-  originalPrice: '25€',
+// El Plan Flash (15€ base, 0€ con cupón)
+const FLASH_PLAN_BASE: PricingPlan = {
+  name: 'Plan Flash',
+  target: 'Ideal para probar',
+  price: '15€',
   reports: '5',
   users: '1',
   popular: true,
   isPromo: true,
   priceId: process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID || '',
   features: [
-    '5 Informes Completos GRATIS',
+    '5 Informes Completos',
     'Acceso total a todas las funciones',
     'Sin compromiso de permanencia',
-    'No requiere tarjeta (opcional)',
+    'Pago único (sin suscripción)',
   ],
 };
-
-// Tus planes normales (sin cambios)
-const STANDARD_PLANS: PricingPlan[] = [
-  {
-    name: 'Esencial',
-    target: 'Solo-preneur (Lite)',
-    price: '49€',
-    reports: '50',
-    users: '1',
-    popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_ESENCIAL_PRICE_ID || '',
-    features: [
-      'Transcripción IA ilimitada',
-      'Plantillas DSM-5/CIE-10',
-      'Almacenamiento Google Drive',
-      'Soporte Email',
-    ],
-  },
-  {
-    name: 'Dúo',
-    target: 'Socios / Parejas',
-    price: '99€',
-    reports: '110',
-    users: '2',
-    popular: true,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID || '',
-    features: [
-      'Todo lo de Esencial',
-      'Panel de Gestión de Equipo',
-      'Plantillas personalizadas',
-      'Soporte Prioritario',
-      'Onboarding asistido',
-    ],
-  },
-  {
-    name: 'Profesional',
-    target: 'Pequeña Consulta',
-    price: '189€',
-    reports: '220',
-    users: '3',
-    popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID || '',
-    features: [
-      'Todo lo de Dúo',
-      'Roles avanzados',
-      'Analítica básica',
-      'Panel de estadísticas',
-    ],
-  },
-  {
-    name: 'Clínica',
-    target: 'Equipos en Crecimiento',
-    price: '299€',
-    reports: '400',
-    users: '4',
-    popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || '',
-    features: [
-      'Todo lo de Profesional',
-      'API de integración',
-      'Gestor de cuenta dedicado',
-      'Contrato personalizado',
-    ],
-  },
-  {
-    name: 'Centro',
-    target: 'Instituciones',
-    price: '450€',
-    reports: '650',
-    users: '5',
-    popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID || '',
-    features: [
-      'Todo lo de Clínica',
-      'SLA Garantizado',
-      'Formación dedicada',
-      'Soporte 24/7',
-    ],
-  },
-];
 
 function PricingContent() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -122,14 +42,52 @@ function PricingContent() {
   const promoCode = searchParams.get('promo');
   const emailParam = searchParams.get('email');
 
-  // 2. Lógica de Activación: Si hay promo, añadimos el plan al principio
-  const activePlans = promoCode === 'FLASH5'
-    ? [FLASH_PLAN, ...STANDARD_PLANS]
-    : STANDARD_PLANS;
+  const { plans: dbPlans, loading: plansLoading } = usePrices();
+
+  const standardPlans: PricingPlan[] = dbPlans.map(p => ({
+    name: p.name,
+    target: p.target,
+    price: `${p.amount}€`,
+    reports: p.reports_limit,
+    users: p.users_limit,
+    features: p.features,
+    priceId: p.id,
+    popular: p.popular
+  }));
+
+  if (plansLoading) {
+    return (
+      <section id="pricing" className="py-24 px-4 bg-background min-h-[600px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full bg-background shadow-neu-flat animate-pulse"></div>
+            <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 animate-spin text-inforia-green" />
+          </div>
+          <span className="text-inforia-green font-heading text-lg tracking-wide">Sincronizando tarifas...</span>
+        </div>
+      </section>
+    );
+  }
+
+  const isFlashPromo = promoCode === 'FLASH5';
+
+  const flashPlan = {
+    ...FLASH_PLAN_BASE,
+    price: isFlashPromo ? '0€' : '15€',
+    originalPrice: isFlashPromo ? '15€' : undefined,
+    features: [
+      '5 Informes Completos',
+      'Acceso total a todas las funciones',
+      'Sin compromiso de permanencia',
+      isFlashPromo ? 'No requiere tarjeta (opcional)' : 'Pago único (sin suscripción)',
+    ]
+  };
+
+  const activePlans = [flashPlan, ...standardPlans];
 
   const handleCheckout = async (plan: PricingPlan) => {
     if (!plan.priceId) {
-      alert('Este plan aún no está disponible. Contacta con soporte.');
+      alert('Error de configuración: Plan no disponible.');
       return;
     }
 
@@ -141,22 +99,19 @@ function PricingContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           priceId: plan.priceId,
-          // Si es el plan promo, enviamos el código y el email capturado
-          promoCode: plan.isPromo ? 'FLASH5' : undefined,
+          promoCode: (plan.isPromo && isFlashPromo) ? 'FLASH5' : undefined,
           email: emailParam || undefined
         }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al crear sesión de checkout');
-      }
-
+      if (!response.ok) throw new Error(data.error || 'Error al iniciar pago');
       if (data.url) window.location.href = data.url;
+
     } catch (error) {
-      console.error('Error al procesar el pago:', error);
-      alert(error instanceof Error ? error.message : 'Error al procesar el pago');
+      console.error(error);
+      alert('Error de conexión con la pasarela de pago.');
       setIsLoading(null);
     }
   };
@@ -164,76 +119,87 @@ function PricingContent() {
   return (
     <section id="pricing" className="py-24 px-4 bg-background transition-all">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-inforia-green">
-            {promoCode === 'FLASH5' ? '¡Oferta Activada! 🎉' : 'Escalera de Valor INFORIA'}
+        <div className="text-center mb-20 space-y-6">
+          <h2 className="text-4xl md:text-5xl font-heading font-bold text-inforia-green drop-shadow-sm">
+            Planes y Precios
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            {promoCode === 'FLASH5'
-              ? 'Has desbloqueado el Pack de Bienvenida. Reclámalo abajo 👇'
-              : 'Elige el plan que se adapta a tu volumen actual. Cambia cuando crezcas.'}
+          <p className="text-xl text-gray-600 font-body max-w-2xl mx-auto">
+            {isFlashPromo
+              ? 'Has desbloqueado el Plan Flash GRATIS. Reclámalo abajo 👇'
+              : 'Elige el plan que se adapta a tu volumen actual.'}
           </p>
         </div>
 
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${promoCode === 'FLASH5' ? 'xl:grid-cols-3' : 'xl:grid-cols-5'} gap-6 max-w-[1400px] mx-auto mb-16`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8 max-w-[1400px] mx-auto mb-20`}>
           {activePlans.map((plan) => (
             <div
-              key={plan.name}
+              key={plan.priceId || plan.name}
               className={`
-                relative rounded-3xl p-6 transition-all duration-300 flex flex-col
+                relative rounded-neu p-8 flex flex-col transition-all duration-300
+                bg-background
                 ${plan.isPromo
-                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-inforia-green shadow-2xl scale-105 z-20 animate-pulse-slow' // Estilo Promo
+                  ? 'shadow-neu-flat border-2 border-inforia-gold/20 z-10'
                   : plan.popular
-                    ? 'bg-background border-2 border-inforia-green z-10 shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]'
-                    : 'bg-background border border-gray-200 hover:scale-[1.02] shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]'
+                    ? 'shadow-neu-flat border-2 border-inforia-green/10 transform md:-translate-y-4'
+                    : 'shadow-neu-flat hover:shadow-neu-convex'
                 }
-                hover:shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]
               `}
             >
-              {plan.isPromo && (
-                <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <span className="bg-inforia-green text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg">
-                    <Sparkles className="w-4 h-4 animate-spin" /> REGALO EXCLUSIVO
+              {/* Solo mostramos badge si es la promo GRATIS activa */}
+              {plan.isPromo && isFlashPromo && (
+                <div className="absolute -top-5 left-0 right-0 flex justify-center">
+                  <span className="bg-inforia-gold text-inforia-green px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg font-heading tracking-wider">
+                    <Sparkles className="w-4 h-4 animate-spin-slow" />
+                    REGALO EXCLUSIVO
                   </span>
                 </div>
               )}
 
-              <div className="space-y-5 flex-1">
-                <div className="inline-block px-3 py-1 rounded-lg bg-inforia-green/5 text-inforia-green text-xs font-bold uppercase tracking-wide">
+              {plan.popular && !plan.isPromo && (
+                <div className="absolute -top-4 left-0 right-0 flex justify-center">
+                  <span className="bg-inforia-green text-inforia-cream px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest shadow-md">
+                    Más Popular
+                  </span>
+                </div>
+              )}
+
+              <div className="space-y-6 flex-1">
+                <div className="inline-block px-4 py-1.5 rounded-full bg-background shadow-neu-pressed text-inforia-green text-xs font-bold uppercase tracking-wide">
                   {plan.target}
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-2xl text-gray-800">{plan.name}</h3>
-                  <div className="flex items-baseline mt-2 gap-2">
+                  <h3 className="font-heading font-bold text-2xl text-inforia-green">{plan.name}</h3>
+                  <div className="flex items-baseline mt-3 gap-3">
                     {plan.originalPrice && (
-                      <span className="line-through text-gray-400 text-lg">{plan.originalPrice}</span>
+                      <span className="line-through text-gray-400 text-lg font-body decoration-inforia-burgundy/50 decoration-2">
+                        {plan.originalPrice}
+                      </span>
                     )}
-                    <span className={`font-bold text-4xl ${plan.isPromo ? 'text-green-600' : 'text-inforia-green'}`}>
+                    <span className={`font-heading font-bold text-4xl ${plan.isPromo ? 'text-inforia-gold' : 'text-inforia-green'}`}>
                       {plan.price}
                     </span>
-                    {!plan.isPromo && <span className="text-gray-500 text-sm">/mes</span>}
+                    {!plan.isPromo && <span className="text-gray-500 text-sm font-body">/mes</span>}
                   </div>
-                  {plan.isPromo && (
-                    <p className="text-xs text-green-700 font-bold mt-1">¡Ahorra {plan.originalPrice}! Solo hoy</p>
-                  )}
                 </div>
 
-                <div className="space-y-2 py-4 border-y border-gray-200">
-                  <div className={`flex items-center gap-2 ${plan.isPromo ? 'text-green-600' : 'text-inforia-green'} font-bold text-sm`}>
-                    <Gift className="w-4 h-4" />
+                <div className="space-y-3 py-6 border-t border-gray-100/50">
+                  <div className={`flex items-center gap-3 ${plan.isPromo ? 'text-inforia-gold' : 'text-inforia-green'} font-bold text-sm`}>
+                    <Gift className="w-5 h-5" />
                     <span>{plan.reports} Informes</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600 text-sm">
-                    <Users className="w-4 h-4" />
+                  <div className="flex items-center gap-3 text-gray-600 text-sm">
+                    <Users className="w-5 h-5" />
                     <span>{plan.users} {parseInt(plan.users) === 1 ? 'Usuario' : 'Usuarios'}</span>
                   </div>
                 </div>
 
-                <ul className="space-y-2.5">
+                <ul className="space-y-4">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-gray-600">
-                      <Check className={`w-3.5 h-3.5 ${plan.isPromo ? 'text-green-600' : 'text-inforia-green'} mt-0.5 shrink-0`} />
+                    <li key={idx} className="flex items-start gap-3 text-sm text-gray-600 font-body leading-relaxed">
+                      <div className={`mt-0.5 p-0.5 rounded-full ${plan.isPromo ? 'bg-inforia-gold/20 text-inforia-gold' : 'bg-inforia-green/10 text-inforia-green'}`}>
+                        <Check className="w-3 h-3" />
+                      </div>
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -244,51 +210,35 @@ function PricingContent() {
                 onClick={() => handleCheckout(plan)}
                 disabled={isLoading === plan.priceId}
                 className={`
-                  mt-6 w-full py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300
+                  mt-8 w-full py-4 px-6 rounded-xl font-bold text-sm transition-all duration-300
                   disabled:opacity-50 disabled:cursor-not-allowed
                   ${plan.isPromo
-                    ? 'bg-inforia-green text-white hover:bg-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105'
-                    : 'bg-background text-inforia-green border-2 border-inforia-green hover:bg-gray-50 shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff]'
+                    ? 'bg-inforia-green text-inforia-gold shadow-neu-flat hover:shadow-neu-pressed hover:text-white'
+                    : 'bg-background text-inforia-green shadow-neu-flat hover:shadow-neu-pressed hover:text-inforia-gold'
                   }
                 `}
               >
                 {isLoading === plan.priceId
                   ? 'Procesando...'
-                  : plan.isPromo ? '🎁 RECLAMAR REGALO GRATIS' : 'Seleccionar'
+                  : (plan.isPromo && isFlashPromo) ? '🎁 RECLAMAR GRATIS' : 'Seleccionar Plan'
                 }
               </button>
             </div>
           ))}
         </div>
 
-        {/* Plan Enterprise - Neumórfico Inverso */}
+        {/* Bloque Enterprise Neumórfico */}
         <div className="max-w-4xl mx-auto">
-          <div
-            className="rounded-3xl bg-background p-8 
-              shadow-[inset_5px_5px_10px_#d1cfcc,inset_-5px_-5px_10px_#ffffff] 
-              flex flex-col md:flex-row items-center justify-between gap-6 
-              border border-white/50"
-          >
-            <div className="space-y-2 text-center md:text-left">
-              <h3 className="font-bold text-2xl text-gray-800">
-                ¿Necesitas más de 650 informes?
-              </h3>
-              <p className="text-gray-600">
-                Diseñamos un plan a medida para grandes redes de clínicas.
-              </p>
+          <div className="rounded-neu bg-background p-10 shadow-neu-flat flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-3 text-center md:text-left">
+              <h3 className="font-heading font-bold text-2xl text-inforia-green">¿Necesitas más capacidad?</h3>
+              <p className="text-gray-600 font-body">Planes a medida para grandes redes de clínicas y hospitales.</p>
             </div>
             <button
               onClick={() => window.location.href = '#contact'}
-              className="
-                px-8 py-3 rounded-xl bg-background text-inforia-green border-2 border-inforia-green font-bold text-sm
-                shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]
-                hover:shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]
-                hover:bg-gray-50 transition-all duration-300
-                flex items-center gap-2
-              "
+              className="px-8 py-4 rounded-xl bg-background text-inforia-green shadow-neu-flat hover:shadow-neu-pressed font-bold text-sm transition-all flex items-center gap-3"
             >
-              Contactar Ventas
-              <ArrowRight className="w-4 h-4" />
+              Contactar Ventas <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -297,10 +247,9 @@ function PricingContent() {
   );
 }
 
-// Wrapper necesario para Next.js App Router y useSearchParams
 export function PricingSection() {
   return (
-    <Suspense fallback={<div className="py-24 text-center">Cargando ofertas...</div>}>
+    <Suspense fallback={<div className="py-24 text-center bg-background">Cargando ofertas...</div>}>
       <PricingContent />
     </Suspense>
   );
