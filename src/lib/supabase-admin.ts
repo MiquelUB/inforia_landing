@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { Database } from './database.types';
 
 // Nota: Usamos la SERVICE_ROLE_KEY, no la anon key.
 // Esta clave NUNCA debe exponerse en el lado del cliente.
@@ -11,7 +12,7 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_
     console.warn('⚠️ ADVERTENCIA: Faltan variables de entorno de Supabase. Usando valores dummy para el build.');
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+export const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
     auth: {
         autoRefreshToken: false,
         persistSession: false

@@ -15,14 +15,21 @@ const VALID_PRICE_IDS = [
   process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID,
   process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID,
   process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID,
+  process.env.STRIPE_TEST_PRICE_ID,
 ].filter(Boolean) as string[];
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('[Checkout] Request Body:', body);
+
     const validatedData = CheckoutSchema.parse(body);
 
+    console.log('[Checkout] Validating Price ID:', validatedData.priceId);
+    console.log('[Checkout] Valid IDs:', VALID_PRICE_IDS);
+
     if (!VALID_PRICE_IDS.includes(validatedData.priceId)) {
+      console.error('[Checkout] Invalid Price ID:', validatedData.priceId);
       return NextResponse.json({ error: 'Plan no válido' }, { status: 400 });
     }
 
@@ -44,16 +51,16 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Checkout] Iniciando sesión para: ${validatedData.email} | Origen: ${origin}`);
 
-    let discounts = undefined;
-    // Lógica del Cupón Flash
-    if (
-      validatedData.promoCode === 'FLASH5' &&
-      validatedData.priceId === process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID
-    ) {
-      if (process.env.STRIPE_COUPON_FLASH_ID) {
-        discounts = [{ coupon: process.env.STRIPE_COUPON_FLASH_ID }];
-      }
-    }
+    // 3. Determinar el modo (subscription vs payment) dinámicamente
+    const priceInfo = await stripe.prices.retrieve(validatedData.priceId);
+    const mode = priceInfo.type === 'recurring' ? 'subscription' : 'payment';
+
+    console.log('[Checkout] Creating session:', {
+      priceId: validatedData.priceId,
+      mode,
+      promoCode: validatedData.promoCode,
+      allow_promotion_codes: true
+    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -63,9 +70,9 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      mode: 'subscription', // Asegúrate de que en Stripe este precio sea recurrente, si es pago único usa 'payment'
-      discounts: discounts,
-      allow_promotion_codes: !discounts,
+      mode: mode,
+      // discounts: discounts, // Desactivado para permitir entrada manual
+      allow_promotion_codes: true, // Siempre mostrar la casilla de cupón
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?canceled=true`,
       customer_email: validatedData.email,
