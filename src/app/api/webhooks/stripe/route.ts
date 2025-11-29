@@ -187,16 +187,16 @@ export async function POST(req: Request) {
                   ` : ''}
 
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://app.inforia.pro/login" 
+                    <a href="https://www.inforia.cat" 
                        style="display: inline-block; background: #2E403B; color: #FBF9F6; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                      ${isNewUser ? '🎯 Ir a Mi Dashboard' : '📊 Acceder a Mi Cuenta'}
+                      ${isNewUser ? '🚀 Empezar Onboarding' : '📊 Acceder a Mi Cuenta'}
                     </a>
                   </div>
 
                   <div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px;">
                     <p style="color: #666; font-size: 14px; margin: 10px 0;">
                       <strong>¿Necesitas ayuda?</strong><br>
-                      Responde a este correo o escríbenos a <a href="mailto:soporte@inforia.pro" style="color: #2E403B;">soporte@inforia.pro</a>
+                      Responde a este correo o escríbenos a <a href="mailto:inforia@inforia.pro" style="color: #2E403B;">inforia@inforia.pro</a>
                     </p>
                     <p style="color: #999; font-size: 12px; margin-top: 20px;">
                       Este correo fue enviado automáticamente. Por favor no respondas directamente a esta notificación.
@@ -216,7 +216,7 @@ export async function POST(req: Request) {
             `;
 
             await resend.emails.send({
-              from: 'INFORIA <hola@inforia.pro>', // Verifica tu dominio en Resend
+              from: 'INFORIA <inforia@inforia.pro>',
               to: customerEmail,
               subject: emailSubject,
               html: emailHtml,
