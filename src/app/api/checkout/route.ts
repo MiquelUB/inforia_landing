@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       cancel_url: `${origin}/?canceled=true`,
       customer_email: validatedData.email,
       locale: 'es',
-      billing_address_collection: 'required',
+      billing_address_collection: 'auto',
       metadata: {
         source: 'landing-page',
         promo_campaign: validatedData.promoCode || 'none'
