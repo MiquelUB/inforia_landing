@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     return new NextResponse(`Webhook Error: ${errorMessage}`, { status: 400 });
   }
 
-  // Solo nos interesa cuando el pago (o registro gratuito) se completa
+  // 1. PAGO EXITOSO / CHECKOUT COMPLETADO
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     console.log(`🔔 Pago recibido: ${session.id}`);
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     // Datos del cliente
     const customerEmail = session.customer_email || session.customer_details?.email;
-    const customerName = session.customer_details?.name || '';
+    const customerName = session.customer_details?.name || 'Profesional';
 
     if (customerEmail && priceId) {
       // --- LÓGICA DE ASIGNACIÓN DE CRÉDITOS ---
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       let planType = 'free';
       let planDisplayName = 'Plan';
 
-      // Mapa de planes (Asegúrate que coinciden con tus variables de entorno)
+      // Mapa de planes
       if (priceId === process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID) {
         creditsToAdd = 5;
         planType = 'promo_flash';
@@ -80,22 +80,19 @@ export async function POST(req: Request) {
 
       try {
         // 1. GESTIÓN DE USUARIO (AUTH)
-        // Buscamos si el usuario ya existe en Supabase Auth
         const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
         const existingUser = users.find(u => u.email === customerEmail);
 
         let userId = existingUser?.id;
         let isNewUser = false;
 
-        // Si NO existe, lo creamos "silenciosamente"
         if (!userId) {
           isNewUser = true;
           console.log(`👤 Creando nuevo usuario para: ${customerEmail}`);
           const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
             email: customerEmail,
-            email_confirm: true, // ¡Vital! Lo marcamos confirmado para que no pida verificar email
+            email_confirm: true,
             user_metadata: { full_name: customerName }
-            // No ponemos password, así el usuario usará "Login con Google" o "Magic Link"
           });
 
           if (createError) throw createError;
@@ -107,7 +104,6 @@ export async function POST(req: Request) {
 
         // 2. GESTIÓN DE PERFIL (BASE DE DATOS)
         if (userId && creditsToAdd > 0) {
-          // Verificamos si ya tiene perfil
           const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('credits_limit')
@@ -119,14 +115,13 @@ export async function POST(req: Request) {
 
           console.log(`💳 Créditos actuales: ${currentCredits} | Añadiendo: ${creditsToAdd} | Total: ${newTotalCredits}`);
 
-          // Actualizamos o creamos el perfil
           const { error: upsertError } = await supabaseAdmin
             .from('profiles')
             .upsert({
-              id: userId, // Vinculamos con el ID de Auth
+              id: userId,
               email: customerEmail,
               full_name: customerName,
-              credits_limit: newTotalCredits, // Sumamos créditos (acumulativo)
+              credits_limit: newTotalCredits,
               plan_type: planType,
               stripe_customer_id: session.customer as string,
               stripe_session_id: session.id,
@@ -139,94 +134,36 @@ export async function POST(req: Request) {
 
           console.log(`✅ ÉXITO: Usuario ${customerEmail} actualizado. Saldo total: ${newTotalCredits} créditos`);
 
-          // 3. ENVIAR EMAIL DE BIENVENIDA/CONFIRMACIÓN
+          // 3. ENVIAR EMAIL DE ONBOARDING (ÉXITO)
+          console.log("Profile processed. Sending onboarding email...");
+
           try {
-            const emailSubject = isNewUser
-              ? `¡Bienvenido a INFORIA! - ${planDisplayName}`
-              : `Confirmación de Compra - ${planDisplayName}`;
-
-            const emailHtml = `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              </head>
-              <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background: linear-gradient(135deg, #2E403B 0%, #1a2621 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                  <h1 style="color: #FBF9F6; margin: 0; font-size: 28px;">¡${isNewUser ? 'Bienvenido' : 'Gracias'}, ${customerName || 'Usuario'}! 🎉</h1>
-                </div>
-                
-                <div style="background: #FBF9F6; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                  <p style="font-size: 16px; color: #2E403B;">
-                    ${isNewUser
-                ? 'Tu cuenta en <strong>INFORIA</strong> ha sido creada exitosamente.'
-                : 'Hemos recibido tu pago correctamente.'}
-                  </p>
-                  
-                  <div style="background: white; border-left: 4px solid #2E403B; padding: 20px; margin: 20px 0; border-radius: 5px;">
-                    <h2 style="color: #2E403B; margin-top: 0; font-size: 20px;">📊 Detalles de tu ${planDisplayName}</h2>
-                    <p style="margin: 10px 0;"><strong>Créditos disponibles:</strong> <span style="color: #2E403B; font-size: 24px; font-weight: bold;">${newTotalCredits} informes</span></p>
-                    <p style="margin: 10px 0;"><strong>Plan:</strong> ${planDisplayName}</p>
-                    <p style="margin: 10px 0; color: #666; font-size: 14px;">
-                      ${isNewUser
-                ? 'Has recibido ' + creditsToAdd + ' créditos de bienvenida'
-                : 'Se han añadido ' + creditsToAdd + ' nuevos créditos a tu cuenta'}
-                    </p>
-                  </div>
-
-                  ${isNewUser ? `
-                  <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <h3 style="color: #2E403B; margin-top: 0; font-size: 16px;">🚀 Primeros pasos</h3>
-                    <ol style="color: #2E403B; margin: 10px 0; padding-left: 20px;">
-                      <li>Accede a tu dashboard usando el botón de abajo</li>
-                      <li>Inicia sesión con Google o tu email</li>
-                      <li>Comienza a generar tus primeros informes</li>
-                    </ol>
-                  </div>
-                  ` : ''}
-
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://www.inforia.cat" 
-                       style="display: inline-block; background: #2E403B; color: #FBF9F6; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                      ${isNewUser ? '🚀 Empezar Onboarding' : '📊 Acceder a Mi Cuenta'}
-                    </a>
-                  </div>
-
-                  <div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px;">
-                    <p style="color: #666; font-size: 14px; margin: 10px 0;">
-                      <strong>¿Necesitas ayuda?</strong><br>
-                      Responde a este correo o escríbenos a <a href="mailto:inforia@inforia.pro" style="color: #2E403B;">inforia@inforia.pro</a>
-                    </p>
-                    <p style="color: #999; font-size: 12px; margin-top: 20px;">
-                      Este correo fue enviado automáticamente. Por favor no respondas directamente a esta notificación.
-                    </p>
-                  </div>
-                </div>
-
-                <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-                  <p>© ${new Date().getFullYear()} INFORIA - Asistente Clínico con IA</p>
-                  <p>
-                    <a href="https://inforia.pro/privacidad" style="color: #2E403B; margin: 0 10px;">Privacidad</a> |
-                    <a href="https://inforia.pro/terminos" style="color: #2E403B; margin: 0 10px;">Términos</a>
-                  </p>
-                </div>
-              </body>
-              </html>
-            `;
-
             await resend.emails.send({
-              from: 'INFORIA <inforia@inforia.pro>',
-              to: customerEmail,
-              subject: emailSubject,
-              html: emailHtml,
-            });
+              from: 'INFORIA <onboarding@mail.inforia.pro>',
+              to: [customerEmail],
+              subject: '¡Bienvenido a INFORIA! Tu cuenta está activa 🚀',
+              html: `
+                <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+                  <h1 style="color: #2E403B;">¡Ya eres parte de INFORIA!</h1>
+                  <p>Hola <strong>${customerName}</strong>,</p>
+                  <p>Tu suscripción al <strong>${planDisplayName}</strong> se ha confirmado con éxito.</p>
+                  
+                  <div style="background-color: #f4f4f5; padding: 24px; border-radius: 12px; margin: 30px 0; text-align: center;">
+                    <p style="margin-bottom: 20px; font-size: 16px;">Tu Puesto de Mando Clínico está listo.</p>
+                    <a href="https://app.inforia.pro/login" style="background-color: #2E403B; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Acceder a INFORIA Ahora</a>
+                  </div>
 
-            console.log(`✉️ Email enviado a ${customerEmail}`);
+                  <p style="color: #666; font-size: 14px;">Si el botón no funciona, copia este enlace: https://app.inforia.pro/login</p>
+                  
+                  <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+                  <p style="font-size: 12px; color: #888;">INFORIA - Inteligencia Clínica para Psicólogos</p>
+                </div>
+              `
+            });
+            console.log("✅ Onboarding email sent");
           } catch (emailError: unknown) {
             const emailErrorMessage = emailError instanceof Error ? emailError.message : 'Unknown email error';
-            console.error("❌ Error enviando email:", emailErrorMessage);
-            // No bloqueamos el proceso si falla el email, los créditos son lo importante
+            console.error("❌ Failed to send onboarding email:", emailErrorMessage);
           }
 
         } else if (creditsToAdd === 0) {
@@ -237,11 +174,52 @@ export async function POST(req: Request) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         console.error('❌ Error procesando usuario en Supabase:', errorMessage);
         console.error('Stack:', err);
-        // No devolvemos error 500 a Stripe para evitar reintentos infinitos si es un error lógico
-        // pero lo logueamos para revisarlo.
       }
     } else {
       console.warn(`⚠️ Falta email o priceId. Email: ${customerEmail}, PriceID: ${priceId}`);
+    }
+  }
+
+  // 2. PAGO FALLIDO / INVOICE PAYMENT FAILED
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as Stripe.Invoice;
+    const customerEmail = invoice.customer_email;
+
+    console.log(`❌ Pago fallido para invoice: ${invoice.id}, cliente: ${customerEmail}`);
+
+    // Aquí podrías actualizar el estado en Supabase si tuvieras un campo 'status' o 'subscription_status'
+    // Ejemplo: await supabaseAdmin.from('profiles').update({ subscription_status: 'past_due' }).eq('email', customerEmail);
+
+    console.log("Payment failure logged. Sending alert email...");
+
+    try {
+      if (customerEmail) {
+        await resend.emails.send({
+          from: 'INFORIA Pagos <billing@mail.inforia.pro>',
+          to: [customerEmail],
+          subject: 'Acción necesaria: Hubo un problema con tu pago ⚠️',
+          html: `
+            <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #991b1b;">No hemos podido procesar tu pago</h2>
+              <p>Hola,</p>
+              <p>Hemos intentado renovar tu suscripción a INFORIA, pero la transacción ha sido rechazada por tu banco.</p>
+              
+              <p><strong>Para evitar la interrupción de tu servicio y mantener acceso a tus informes, por favor actualiza tu método de pago lo antes posible.</strong></p>
+              
+              <div style="margin: 30px 0;">
+                <a href="https://app.inforia.pro/billing" style="background-color: #991b1b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Actualizar Método de Pago</a>
+              </div>
+
+              <p>Intentaremos realizar el cobro de nuevo en unos días.</p>
+              <p>Atentamente,<br/>El equipo de Facturación de INFORIA</p>
+            </div>
+          `
+        });
+        console.log("✅ Payment failed email sent");
+      }
+    } catch (emailError: unknown) {
+      const emailErrorMessage = emailError instanceof Error ? emailError.message : 'Unknown email error';
+      console.error("❌ Failed to send payment failed email:", emailErrorMessage);
     }
   }
 
