@@ -1,99 +1,90 @@
-import { z } from 'zod';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const CheckoutSchema = z.object({
-  priceId: z.string().min(1, 'El ID de precio es requerido'),
-  email: z.string().email('Email inválido').optional(),
-  promoCode: z.string().optional(),
+// 1. Inicialización de Stripe (Lado Servidor)
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Falta la variable STRIPE_SECRET_KEY en .env.local');
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16' as any, // Asegúrate de que coincida con tu versión en Stripe Dashboard
 });
 
+// 2. Whitelist de Precios Válidos (Seguridad)
+// Solo permitimos los IDs que tú has configurado en el entorno
 const VALID_PRICE_IDS = [
-  process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID,
-  process.env.NEXT_PUBLIC_STRIPE_ESENCIAL_PRICE_ID,
-  process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID,
-  process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID,
-  process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID,
-  process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID,
-  process.env.STRIPE_TEST_PRICE_ID,
-].filter(Boolean) as string[];
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH,
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS,
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO,
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_CLINICA,
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO,
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS,
+].filter(Boolean); // Filtra undefineds si alguna variable falta
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    console.log('[Checkout] Request Body:', body);
+    // 3. Parsear el body
+    const body = await req.json();
+    const { priceId, quantity = 1 } = body;
 
-    const validatedData = CheckoutSchema.parse(body);
-
-    console.log('[Checkout] Validating Price ID:', validatedData.priceId);
-    console.log('[Checkout] Valid IDs:', VALID_PRICE_IDS);
-
-    if (!VALID_PRICE_IDS.includes(validatedData.priceId)) {
-      console.error('[Checkout] Invalid Price ID:', validatedData.priceId);
-      return NextResponse.json({ error: 'Plan no válido' }, { status: 400 });
+    // 4. Validaciones
+    if (!priceId || !VALID_PRICE_IDS.includes(priceId)) {
+      console.error(`Intento de compra con ID no válido: ${priceId}`);
+      return NextResponse.json(
+        { error: 'El plan seleccionado no es válido o no está disponible.' },
+        { status: 400 }
+      );
     }
 
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY no configurada en variables de entorno');
+    // Validación específica para Centro Plus (Opcional, doble check de seguridad)
+    if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS && quantity < 6) {
+      return NextResponse.json(
+        { error: 'El plan Centro Plus requiere un mínimo de 6 usuarios.' },
+        { status: 400 }
+      );
     }
 
-    // 1. CORRECCIÓN: Usamos la versión estable por defecto para evitar errores
-    const stripe = new Stripe(stripeSecretKey, {
-      typescript: true,
-    });
+    console.log(`📦 Creando sesión: Plan ${priceId} | Cantidad: ${quantity}`);
 
-    // 2. CORRECCIÓN CRÍTICA: Definición robusta del dominio de retorno
-    // Esto soluciona el error 500 al evitar 'localhost' en producción
-    const protocol = request.headers.get('x-forwarded-proto') || 'https';
-    const host = request.headers.get('host') || 'inforia.pro';
-    const origin = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`;
-
-    console.log(`[Checkout] Iniciando sesión para: ${validatedData.email} | Origen: ${origin}`);
-
-    // 3. Determinar el modo (subscription vs payment) dinámicamente
-    const priceInfo = await stripe.prices.retrieve(validatedData.priceId);
-    const mode = priceInfo.type === 'recurring' ? 'subscription' : 'payment';
-
-    console.log('[Checkout] Creating session:', {
-      priceId: validatedData.priceId,
-      mode,
-      promoCode: validatedData.promoCode,
-      allow_promotion_codes: true
-    });
-
+    // 5. Crear Sesión de Checkout en Stripe
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       line_items: [
         {
-          price: validatedData.priceId,
-          quantity: 1,
+          price: priceId,
+          quantity: quantity,
         },
       ],
-      mode: mode,
-      // discounts: discounts, // Desactivado para permitir entrada manual
-      allow_promotion_codes: true, // Siempre mostrar la casilla de cupón
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?canceled=true`,
-      customer_email: validatedData.email,
-      locale: 'es',
-      billing_address_collection: 'auto',
+      // Detectar modo: Flash es pago único ("payment"), el resto son suscripciones ("subscription")
+      mode: priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH ? 'payment' : 'subscription',
+      
+      success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/?canceled=true`,
+      
+      // Metadatos clave para tu Webhook en Supabase
       metadata: {
-        source: 'landing-page',
-        promo_campaign: validatedData.promoCode || 'none'
+        planId: priceId,
+        seats: quantity.toString(),
+        // Aquí podrías añadir userId si tienes autenticación previa
       },
+      
+      // Recopilación de datos fiscales (NIF/DNI) automática
+      tax_id_collection: {
+        enabled: true,
+      },
+      
+      // Permitir códigos promocionales
+      allow_promotion_codes: true,
     });
 
-    return NextResponse.json({ success: true, url: session.url, sessionId: session.id });
+    // 6. Retornar URL
+    return NextResponse.json({ url: session.url });
 
   } catch (error: any) {
-    console.error('❌ Error crítico en checkout:', error);
+    console.error('❌ Error en Stripe Checkout:', error);
     return NextResponse.json(
-      {
-        error: error.message || 'Error interno del servidor',
-        code: error.code
-      },
+      { error: error.message || 'Error interno del servidor' },
       { status: 500 }
     );
   }
-}
+};
