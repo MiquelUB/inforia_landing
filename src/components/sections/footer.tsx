@@ -43,7 +43,7 @@ export function Footer() {
           {/* Bottom */}
           <div className="flex flex-col md:flex-row items-center justify-between">
             <p className="text-sm text-inforia-green">
-              © {currentYear} INFORIA. Todos los derechos reservados.
+              © {currentYear} INFORIA. Todos los derechos reservados. <span className="text-xs opacity-50 ml-2">v1.0.1</span>
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="/" className="text-inforia-green hover:text-inforia-cream transition">
