@@ -7,28 +7,29 @@ import Image from 'next/image';
 export function HeroSection() {
   return (
     <section className="min-h-screen flex items-center justify-center px-4 py-20 bg-background">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
         {/* Left: Hero Text */}
         <div className="space-y-6">
           <h1 className="text-5xl md:text-6xl font-serif text-inforia-green leading-tight">
-            Recupera tu vocación. Nosotros nos encargamos del papeleo.
+            Tu consulta, organizada con precisión clínica
           </h1>
           <p className="text-xl text-gray-600">
-            El asistente clínico con IA para psicólogos. Automatiza informes, gestiona pacientes y enfócate en lo que realmente importa.
+            iNFORiA te ayuda a gestionar tu día a día profesional sin esfuerzo: agenda inteligente, pagos centralizados, informes clínicos automáticos y un historial completo siempre listo.
+            <br className="hidden md:block" />
+            Trabaja mejor, decide con más claridad y libera horas cada semana.
           </p>
           <div className="flex gap-4">
             <NeuButton
               variant="primary"
               size="lg"
-              onClick={() => document.getElementById('demo-gratis')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Demo Gratis
+              Comenzar ahora
             </NeuButton>
           </div>
         </div>
 
-        {/* Right: Hero Image with Neumorphic Frame */}
-        <div className="relative">
+        <div className="relative flex flex-col gap-8">
           <div className="rounded-[30px] overflow-hidden shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff] bg-background">
             <Image
               src="/img/mujer_main.png"
@@ -39,8 +40,22 @@ export function HeroSection() {
               priority
             />
           </div>
+
+          <div className="text-center space-y-4">
+            <h2 className="text-xl font-bold text-inforia-green">
+              El asistente que tu consulta necesitaba
+            </h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              iNFORiA combina gestión, documentación y análisis clínico en una única herramienta pensada para psicólogos, psiquiatras y centros multidisciplinares.
+              <br />
+              <span className="font-bold text-inforia-green">Todo el rigor. Toda la eficiencia. Ningún caos administrativo.</span>
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Sub-Hero Section - Moved inside grid */}
+
     </section>
   );
 }

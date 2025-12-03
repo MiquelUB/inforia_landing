@@ -6,24 +6,14 @@ import { Clock, TrendingUp, Brain, ShieldCheck, Users, FileText, Heart, Activity
 export function RoiSection() {
   const items = [
     {
-      icon: FileText,
-      value: '80%',
-      label: 'Reducción de papeleo',
-    },
-    {
       icon: Clock,
-      value: '15h',
-      label: 'Tiempo ahorrado semanal',
-    },
-    {
-      icon: Users,
-      value: '500+',
-      label: 'Psicólogos activos',
+      value: '1-2h',
+      label: 'Gestión semanal (vs 10-14h)',
     },
     {
       icon: Activity,
-      value: '+25%',
-      label: 'Capacidad de atención',
+      value: '+ Sesiones',
+      label: 'Más tiempo disponible',
     },
     {
       icon: Brain,
@@ -31,19 +21,29 @@ export function RoiSection() {
       label: 'Estrés administrativo',
     },
     {
+      icon: TrendingUp,
+      value: '+ Ingresos',
+      label: 'Mayor rentabilidad',
+    },
+    {
+      icon: FileText,
+      value: '100%',
+      label: 'Decisiones informadas',
+    },
+    {
+      icon: ShieldCheck,
+      value: '0',
+      label: 'Errores administrativos',
+    },
+    {
       icon: Heart,
       value: '100%',
       label: 'Tranquilidad mental',
     },
     {
-      icon: TrendingUp,
+      icon: Users,
       value: '360º',
       label: 'Visión clínica',
-    },
-    {
-      icon: ShieldCheck,
-      value: '0',
-      label: 'Errores en gestión',
     },
   ];
 
@@ -54,6 +54,11 @@ export function RoiSection() {
           <h2 className="text-4xl font-heading font-bold text-inforia-green">
             Tu tiempo también es clínico
           </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Un profesional invierte de media <span className="font-bold text-[#800020]">10 a 14 horas</span> a la semana en tareas administrativas.
+            <br />
+            Con iNFORiA esas tareas pasan a tomar <span className="font-bold text-inforia-green">1 o 2 horas</span>.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -77,7 +82,7 @@ export function RoiSection() {
           ))}
         </div>
 
-        <div className="mt-16 max-w-4xl mx-auto p-8 rounded-2xl bg-inforia-green/5 border border-inforia-green/10 text-center">
+        <div className="mt-16 max-w-4xl mx-auto text-center">
           <p className="text-2xl md:text-3xl font-serif text-inforia-green italic">
             "iNFORiA no es un gasto: es la herramienta que multiplica tu capacidad de trabajo."
           </p>

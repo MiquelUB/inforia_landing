@@ -2,10 +2,12 @@ import { Suspense } from 'react';
 import { Header } from '@/components/sections/header';
 import { HeroSection } from '@/components/sections/hero-section';
 import { LeadForm } from '@/components/sections/lead-form';
+import { ValueDifferentialSection } from '@/components/sections/value-differential-section';
 import { VideoSection } from '@/components/sections/video-section';
-import { ProblemSolutionSection } from '@/components/sections/problem-solution';
+import { RoiSection } from '@/components/sections/roi-section';
 import { PricingSection } from '@/components/sections/pricing-section';
 import { FAQSection } from '@/components/sections/faq-section';
+import { CtaSection } from '@/components/sections/cta-section';
 import { Footer } from '@/components/sections/footer';
 import { PromoActivator } from '@/components/promo-activator';
 
@@ -26,10 +28,12 @@ export default function Home() {
       <Header />
       <HeroSection />
       <LeadForm />
+      <ValueDifferentialSection />
       <VideoSection />
-      <ProblemSolutionSection />
+      <RoiSection />
       <PricingSection />
       <FAQSection />
+      <CtaSection />
       <Footer />
     </div>
   );

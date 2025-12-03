@@ -1,87 +1,63 @@
+'use client';
+
 import React from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 export function ProblemSolutionSection() {
   const comparisons = [
     {
-      title: 'Diagnósticos',
-      manual: 'Escribir manualmente cada diagnóstico, validar contra DSM-5',
-      inforia: 'IA sugiere diagnósticos validados en segundos',
+      manual: 'Cada informe requiere entre 20 y 40 minutos.',
+      inforia: 'Redacción clínica automática basada en protocolos profesionales.',
     },
     {
-      title: 'Informes clínicos',
-      manual: '2-3 horas por informe, riesgo de inconsistencias',
-      inforia: 'Genera informes profesionales en 5 minutos',
+      manual: 'Duplicas información en distintos documentos.',
+      inforia: 'Todo centralizado: informes, citas, pagos, historial y dosieres.',
     },
     {
-      title: 'Seguimiento de pacientes',
-      manual: 'Hojas de cálculo confusas y propenso a errores',
-      inforia: 'Dashboard intuitivo con historial completo',
+      manual: 'Agendas, pagos e historial están distribuidos en varias herramientas.',
+      inforia: 'Evolución clara y accesible al instante.',
+    },
+    {
+      manual: 'Revisar la evolución del paciente lleva demasiado tiempo.',
+      inforia: 'El equipo trabaja con un mismo criterio y estándar documental.',
+    },
+    {
+      manual: 'La documentación pierde consistencia entre profesionales.',
+      inforia: 'La consulta funciona de forma ordenada y previsible.',
     },
   ];
 
   return (
-    <section id="features" className="py-20 px-4 bg-background">
+    <section className="py-20 px-4 bg-background">
       <div className="max-w-6xl mx-auto space-y-12">
         <div className="text-center space-y-4">
           <h2 className="text-4xl font-bold text-inforia-green">
-            El Papeleo Manual vs INFORIA
+            Cuando gestionas tu consulta sin iNFORiA... vs Cuando trabajas con iNFORiA...
           </h2>
-          <p className="text-xl text-gray-600">
-            Compara cómo trabajas hoy con cómo trabajarás mañana
-          </p>
         </div>
 
         {/* Comparison Cards */}
         <div className="space-y-6">
-          {comparisons.map((item) => (
+          {comparisons.map((item, idx) => (
             <div
-              key={item.title}
-              className="rounded-3xl bg-background p-8 shadow-[inset_5px_5px_10px_#d1cfcc,inset_-5px_-5px_10px_#ffffff] border border-white/50"
+              key={idx}
+              className="grid md:grid-cols-2 gap-4 md:gap-8 items-stretch"
             >
-              <h3 className="text-2xl font-bold text-inforia-green mb-6">
-                {item.title}
-              </h3>
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Manual Process */}
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <XCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-gray-700">Método manual</p>
-                      <p className="text-gray-600 mt-2">{item.manual}</p>
-                    </div>
-                  </div>
+              {/* Manual (Problem) */}
+              <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100 flex items-start gap-4">
+                <div className="p-2 bg-red-100 rounded-full text-red-600 shrink-0">
+                  <X className="w-5 h-5" />
                 </div>
-
-                {/* INFORIA Solution */}
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-6 h-6 text-inforia-green flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-inforia-green">Con INFORIA</p>
-                      <p className="text-gray-600 mt-2">{item.inforia}</p>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-gray-700 font-medium pt-1">{item.manual}</p>
               </div>
-            </div>
-          ))}
-        </div>
 
-        {/* Benefits Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
-          {[
-            '📋 Informe sin sesgo',
-            '⚡ 10x más rápido',
-            '🔒 HIPAA compliant',
-            '💰 ROI en 3 meses',
-          ].map((benefit) => (
-            <div
-              key={benefit}
-              className="rounded-3xl bg-background p-6 text-center shadow-[inset_5px_5px_10px_#d1cfcc,inset_-5px_-5px_10px_#ffffff] border border-white/50"
-            >
-              <p className="text-lg font-semibold text-inforia-green">{benefit}</p>
+              {/* Inforia (Solution) */}
+              <div className="bg-green-50/50 p-6 rounded-2xl border border-green-100 flex items-start gap-4 shadow-neu-flat">
+                <div className="p-2 bg-inforia-green/10 rounded-full text-inforia-green shrink-0">
+                  <Check className="w-5 h-5" />
+                </div>
+                <p className="text-gray-800 font-bold pt-1">{item.inforia}</p>
+              </div>
             </div>
           ))}
         </div>

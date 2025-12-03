@@ -6,126 +6,142 @@ import { useSearchParams } from 'next/navigation';
 
 interface PricingPlan {
   name: string;
-  target: string;
   price: string;
-  originalPrice?: string; // Para tachar precios
+  originalPrice?: string;
   reports: string;
   users: string;
   features: string[];
   priceId: string;
   popular?: boolean;
-  isPromo?: boolean; // Para destacar la oferta flash
+  isDynamic?: boolean;
 }
 
-// 1. Definimos el Plan Flash (Oculto por defecto)
+// 1. Definimos el Plan Flash
 const FLASH_PLAN: PricingPlan = {
-  name: 'Pack Bienvenida',
-  target: 'Oferta Especial Email',
-  price: '0€',
-  originalPrice: '25€',
+  name: 'Plan Flash',
+  price: '15€',
   reports: '5',
   users: '1',
   popular: true,
-  isPromo: true,
-  priceId: process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID || '',
+  priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH || '',
   features: [
-    '5 Informes Completos GRATIS',
+    '5 Informes Completos',
     'Acceso total a todas las funciones',
-    'Sin compromiso de permanencia',
-    'No requiere tarjeta (opcional)',
+    'Sin caducidad',
+    'Pago único (sin suscripción)',
   ],
 };
 
-// Tus planes normales (sin cambios)
+// Tus planes normales
 const STANDARD_PLANS: PricingPlan[] = [
   {
-    name: 'Esencial',
-    target: 'Solo-preneur (Lite)',
-    price: '49€',
-    reports: '50',
+    name: 'PRO',
+    price: '99€',
+    reports: '100',
     users: '1',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_ESENCIAL_PRICE_ID || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || '',
     features: [
-      'Transcripción IA ilimitada',
-      'Plantillas DSM-5/CIE-10',
-      'Almacenamiento Google Drive',
-      'Soporte Email',
+      '100 informes incluidos',
+      'Gestión de agenda y pagos',
+      'Dossier clínico completo',
     ],
   },
   {
-    name: 'Dúo',
-    target: 'Socios / Parejas',
-    price: '99€',
-    reports: '110',
-    users: '2',
+    name: 'PRO+',
+    price: '199€',
+    reports: '200',
+    users: '1',
     popular: true,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS || '',
     features: [
-      'Todo lo de Esencial',
-      'Panel de Gestión de Equipo',
-      'Plantillas personalizadas',
-      'Soporte Prioritario',
-      'Onboarding asistido',
+      '200 informes incluidos',
+      'Todo lo del plan PRO',
+      'Prioridad en soporte',
     ],
   },
   {
-    name: 'Profesional',
-    target: 'Pequeña Consulta',
-    price: '189€',
-    reports: '220',
+    name: 'EQUIPO',
+    price: '299€',
+    reports: '300',
     users: '3',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO || '',
     features: [
-      'Todo lo de Dúo',
-      'Roles avanzados',
-      'Analítica básica',
-      'Panel de estadísticas',
+      '300 informes incluidos',
+      '3 Usuarios',
+      'Panel de gestión de equipo',
     ],
   },
   {
-    name: 'Clínica',
-    target: 'Equipos en Crecimiento',
-    price: '299€',
+    name: 'CLÍNICA',
+    price: '399€',
     reports: '400',
     users: '4',
     popular: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || '',
     features: [
-      'Todo lo de Profesional',
-      'API de integración',
-      'Gestor de cuenta dedicado',
-      'Contrato personalizado',
+      '400 informes incluidos',
+      '4 Usuarios',
+      'Roles y permisos avanzados',
     ],
   },
   {
-    name: 'Centro',
-    target: 'Instituciones',
-    price: '450€',
-    reports: '650',
+    name: 'CENTRO',
+    price: '499€',
+    reports: '500',
     users: '5',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO || '',
     features: [
-      'Todo lo de Clínica',
-      'SLA Garantizado',
-      'Formación dedicada',
-      'Soporte 24/7',
+      '500 informes incluidos',
+      '5 Usuarios',
+      'API de integración',
+    ],
+  },
+  {
+    name: 'CENTRO PLUS',
+    price: '599€', // Precio base para 6 usuarios
+    reports: '600', // Base
+    users: '6', // Base
+    popular: false,
+    isDynamic: true,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS || '',
+    features: [
+      'Bolsa global de créditos',
+      'Auditoría y control total',
+      'Soporte dedicado',
     ],
   },
 ];
 
 function PricingContent() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [seats, setSeats] = useState(6); // Estado para el slider de Centro Plus
   const searchParams = useSearchParams();
-  const promoCode = searchParams.get('promo');
   const emailParam = searchParams.get('email');
 
-  // 2. Lógica de Activación: Si hay promo, añadimos el plan al principio
-  const activePlans = promoCode === 'FLASH5'
-    ? [FLASH_PLAN, ...STANDARD_PLANS]
-    : STANDARD_PLANS;
+  // DEBUG: Verificar variables de entorno (Individualmente)
+  console.log('--- DEBUG STRIPE START ---');
+  console.log('FLASH:', process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH);
+  console.log('PRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO);
+  console.log('PRO+:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS);
+  console.log('EQUIPO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO);
+  console.log('CLINICA:', process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID);
+  console.log('CENTRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO);
+  console.log('CENTRO_PLUS:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS);
+  console.log('--- DEBUG STRIPE END ---');
+
+  // Todos los planes visibles
+  const activePlans = [FLASH_PLAN, ...STANDARD_PLANS];
+
+  // Cálculo dinámico para Centro Plus
+  const calculateDynamicPrice = (users: number) => {
+    // Base 599€ por 6 usuarios. +100€ por cada usuario extra.
+    const basePrice = 599;
+    const extraUsers = users - 6;
+    return basePrice + (extraUsers * 100);
+  };
 
   const handleCheckout = async (plan: PricingPlan) => {
     if (!plan.priceId) {
@@ -141,9 +157,9 @@ function PricingContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           priceId: plan.priceId,
-          // Si es el plan promo, enviamos el código y el email capturado
-          promoCode: plan.isPromo ? 'FLASH5' : undefined,
-          email: emailParam || undefined
+          promoCode: plan.name === 'Plan Flash' ? 'FLASH5' : undefined, // Mantenemos el código interno si es necesario
+          email: emailParam || undefined,
+          quantity: plan.isDynamic ? seats : 1,
         }),
       });
 
@@ -166,74 +182,80 @@ function PricingContent() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-4xl md:text-5xl font-bold text-inforia-green">
-            {promoCode === 'FLASH5' ? '¡Oferta Activada! 🎉' : 'Escalera de Valor INFORIA'}
+            Elije tu Plan
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            {promoCode === 'FLASH5'
-              ? 'Has desbloqueado el Pack de Bienvenida. Reclámalo abajo 👇'
-              : 'Elige el plan que se adapta a tu volumen actual. Cambia cuando crezcas.'}
+            Planes diseñados para adaptarse a tu forma de trabajar
           </p>
         </div>
 
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${promoCode === 'FLASH5' ? 'xl:grid-cols-3' : 'xl:grid-cols-5'} gap-6 max-w-[1400px] mx-auto mb-16`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-[1400px] mx-auto mb-16">
           {activePlans.map((plan) => (
             <div
               key={plan.name}
               className={`
-                relative rounded-3xl p-6 transition-all duration-300 flex flex-col
-                ${plan.isPromo
-                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-inforia-green shadow-2xl scale-105 z-20 animate-pulse-slow' // Estilo Promo
-                  : plan.popular
-                    ? 'bg-background border-2 border-inforia-green z-10 shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]'
-                    : 'bg-background border border-gray-200 hover:scale-[1.02] shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff]'
-                }
-                hover:shadow-[8px_8px_16px_#d1cfcc,-8px_-8px_16px_#ffffff]
+                relative rounded-neu p-8 transition-all duration-300 flex flex-col
+                bg-background shadow-neu-flat hover:shadow-neu-pressed
+                ${plan.popular ? 'border-2 border-inforia-green/10 transform md:-translate-y-4 z-10' : ''}
               `}
             >
-              {plan.isPromo && (
-                <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <span className="bg-inforia-green text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg">
-                    <Sparkles className="w-4 h-4 animate-spin" /> REGALO EXCLUSIVO
-                  </span>
-                </div>
-              )}
-
               <div className="space-y-5 flex-1">
-                <div className="inline-block px-3 py-1 rounded-lg bg-inforia-green/5 text-inforia-green text-xs font-bold uppercase tracking-wide">
-                  {plan.target}
-                </div>
-
                 <div>
                   <h3 className="font-bold text-2xl text-gray-800">{plan.name}</h3>
                   <div className="flex items-baseline mt-2 gap-2">
                     {plan.originalPrice && (
                       <span className="line-through text-gray-400 text-lg">{plan.originalPrice}</span>
                     )}
-                    <span className={`font-bold text-4xl ${plan.isPromo ? 'text-green-600' : 'text-inforia-green'}`}>
-                      {plan.price}
+                    <span className="font-bold text-4xl text-inforia-green">
+                      {plan.isDynamic ? `${calculateDynamicPrice(seats)}€` : plan.price}
                     </span>
-                    {!plan.isPromo && <span className="text-gray-500 text-sm">/mes</span>}
+                    {plan.name !== 'Plan Flash' && <span className="text-gray-500 text-sm">/mes</span>}
                   </div>
-                  {plan.isPromo && (
-                    <p className="text-xs text-green-700 font-bold mt-1">¡Ahorra {plan.originalPrice}! Solo hoy</p>
-                  )}
                 </div>
 
+                {/* Selector de Usuarios para Centro Plus */}
+                {plan.isDynamic && (
+                  <div className="py-4">
+                    <div className="flex items-center justify-between bg-background rounded-neu-inner p-2 shadow-neu-pressed">
+                      <button 
+                        onClick={() => setSeats(Math.max(6, seats - 1))}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-background shadow-neu-flat text-inforia-green hover:text-inforia-gold active:shadow-neu-pressed transition-all"
+                      >
+                        -
+                      </button>
+                      <span className="font-bold text-gray-700">{seats} Usuarios</span>
+                      <button 
+                        onClick={() => setSeats(Math.min(10, seats + 1))}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-background shadow-neu-flat text-inforia-green hover:text-inforia-gold active:shadow-neu-pressed transition-all"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="text-xs text-center text-gray-500 mt-2">
+                      {seats * 100} informes incluidos
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2 py-4 border-y border-gray-200">
-                  <div className={`flex items-center gap-2 ${plan.isPromo ? 'text-green-600' : 'text-inforia-green'} font-bold text-sm`}>
+                  <div className="flex items-center gap-2 text-inforia-green font-bold text-sm">
                     <Gift className="w-4 h-4" />
-                    <span>{plan.reports} Informes</span>
+                    <span>
+                      {plan.isDynamic ? `${seats * 100}` : plan.reports} {plan.isDynamic ? 'Informes' : (plan.name === 'PRO' || plan.name === 'PRO+' ? 'informes' : 'Informes')}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 text-sm">
                     <Users className="w-4 h-4" />
-                    <span>{plan.users} {parseInt(plan.users) === 1 ? 'Usuario' : 'Usuarios'}</span>
+                    <span>
+                      {plan.isDynamic ? `${seats} Usuarios` : `${plan.users} ${parseInt(plan.users) === 1 ? 'Usuario' : 'Usuarios'}`}
+                    </span>
                   </div>
                 </div>
 
                 <ul className="space-y-2.5">
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-xs text-gray-600">
-                      <Check className={`w-3.5 h-3.5 ${plan.isPromo ? 'text-green-600' : 'text-inforia-green'} mt-0.5 shrink-0`} />
+                      <Check className="w-3.5 h-3.5 text-inforia-green mt-0.5 shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -246,15 +268,12 @@ function PricingContent() {
                 className={`
                   mt-6 w-full py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  ${plan.isPromo
-                    ? 'bg-inforia-green text-white hover:bg-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105'
-                    : 'bg-background text-inforia-green border-2 border-inforia-green hover:bg-gray-50 shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff]'
-                  }
+                  bg-background text-inforia-green border-2 border-inforia-green hover:bg-gray-50 shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff]
                 `}
               >
                 {isLoading === plan.priceId
                   ? 'Procesando...'
-                  : plan.isPromo ? '🎁 RECLAMAR REGALO GRATIS' : 'Seleccionar'
+                  : 'Seleccionar'
                 }
               </button>
             </div>
@@ -271,11 +290,8 @@ function PricingContent() {
           >
             <div className="space-y-2 text-center md:text-left">
               <h3 className="font-bold text-2xl text-gray-800">
-                ¿Necesitas más de 650 informes?
+                ¿Necesitas personalizacion?
               </h3>
-              <p className="text-gray-600">
-                Diseñamos un plan a medida para grandes redes de clínicas.
-              </p>
             </div>
             <button
               onClick={() => window.location.href = '#contact'}
@@ -287,7 +303,7 @@ function PricingContent() {
                 flex items-center gap-2
               "
             >
-              Contactar Ventas
+              Hablamos
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

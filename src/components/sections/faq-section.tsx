@@ -10,49 +10,54 @@ interface FAQ {
 
 const faqs: FAQ[] = [
     {
-        question: '¿Cómo funciona exactamente la prueba de los 5 informes gratis?',
-        answer: 'Es nuestra forma de demostrarte la calidad sin riesgo. Solicitas tu código en la web, te llega al correo y tienes acceso inmediato a la plataforma completa para generar tus primeros 5 informes reales. Sin introducir tarjeta de crédito, sin límite de tiempo para gastarlos y sin letra pequeña. Queremos que veas el valor antes de pagar un céntimo.',
+        question: '¿Qué es iNFORiA?',
+        answer: 'iNFORiA es tu ayudante inteligente: genera informes clínicos, organiza tu agenda y registra cobros con rigor profesional, basándose en criterios DSM-5 y CIE-11. Todo mediante una interfaz clara que puedes usar desde el primer minuto.',
     },
     {
-        question: '¿Es legal utilizar IA para redactar informes clínicos en España?',
-        answer: 'Sí, es completamente legal y ético, siempre que se utilice como herramienta de asistencia. INFORIA actúa como un borrador inteligente: procesa la información, pero tú eres quien revisa, valida y firma el documento final. Cumplimos rigurosamente con el RGPD y la LOPD, asegurando que la tecnología sirva al profesional, nunca sustituyendo su criterio clínico.',
+        question: '¿Cómo funciona el sistema de créditos?',
+        answer: 'Cada plan incluye una cantidad de créditos mensual. El consumo es proporcional al uso real de IA y de almacenamiento que requiere cada acción. Si una sesión necesita más procesamiento o más capacidad de subida, consumirá más créditos.',
     },
     {
-        question: 'Me preocupa la privacidad. ¿La IA "aprende" con los datos de mis pacientes?',
-        answer: 'Rotundamente NO. Esta es una diferencia crítica de INFORIA. A diferencia de herramientas gratuitas como ChatGPT, nosotros utilizamos una infraestructura empresarial blindada donde tus datos no se utilizan para entrenar a la IA. La información se procesa de forma encriptada para generar tu informe y luego desaparece del motor de procesamiento. Tu secreto profesional está a salvo.',
+        question: '¿Los informes son editables?',
+        answer: 'Sí. Cada informe se puede modificar completamente: redacción, diagnóstico, evolución, notas o estructura. iNFORiA aporta la base clínica y tú defines el contenido final.',
     },
     {
-        question: '¿Los informes sonarán robóticos o genéricos?',
-        answer: 'Para nada. Hemos entrenado a nuestros modelos específicamente con terminología clínica, DSM-5 y CIE-10 para que el lenguaje sea técnico, preciso y empático. Además, INFORIA se adapta al contexto: sabe diferenciar un informe pericial de una nota de evolución. El resultado es un documento profesional que, en el 95% de los casos, solo requiere una revisión ligera por tu parte.',
+        question: '¿Dónde se guardan mis informes y mi historial clínico?',
+        answer: 'Todo se almacena directamente en tu Google Drive, de forma estructurada y privada. iNFORiA no almacena tu documentación clínicamente sensible en servidores propios. Esto garantiza el control total, el cumplimiento RGPD y la independencia de la herramienta.',
     },
     {
-        question: '¿Qué tipo de "input" necesito darle? ¿Solo voz?',
-        answer: 'INFORIA es flexible. Puedes subir el audio grabado de una sesión (con consentimiento), dictar tus propias notas de voz post-sesión o, si lo prefieres, subir tus apuntes escritos escaneados o en texto "sucio". El sistema se encarga de estructurar, limpiar y redactar todo en un formato coherente, ahorrándote horas de transcripción y redacción.',
+        question: '¿Puedo recuperar el historial completo de un paciente?',
+        answer: 'Sí. Puedes acceder desde iNFORiA o directamente desde tu Drive. Tendrás siempre disponibles informes, evolución, documentación y dosieres ordenados automáticamente.',
     },
     {
-        question: '¿Dónde se guardan los datos? ¿Están seguros?',
-        answer: 'La seguridad es nuestra obsesión. Utilizamos servidores en la Unión Europea con certificación ISO 27001 y encriptación AES-256 (nivel bancario). Además, hemos diseñado INFORIA para integrarse con tu propio entorno (como Google Drive), de modo que tú mantengas la soberanía y el control final de los archivos de tus pacientes.',
+        question: '¿Cómo funciona iNFORiA en un centro con varios profesionales?',
+        answer: 'La cuenta propietaria gestiona usuarios, permisos y créditos. Cada profesional solo accede a su propia información, manteniendo el secreto profesional. El propietario únicamente ve datos administrativos (uso de créditos, actividad general), nunca contenido clínico ni informes del equipo.',
     },
     {
-        question: '¿Qué pasa si un mes necesito hacer más informes de los que incluye mi plan?',
-        answer: 'No te dejaremos tirado. Si superas el límite de tu plan (por ejemplo, el Plan Profesional de 100 informes), puedes adquirir paquetes extra de informes sueltos directamente desde tu panel. Si tu volumen crece de forma sostenida, te avisaremos para que valores pasar al siguiente plan y optimizar tu inversión.',
+        question: '¿Puedo adaptar los informes a mi modelo terapéutico?',
+        answer: 'Sí. Puedes modificar narrativa, estructura, lenguaje, hipótesis y enfoque profesional. iNFORiA te da la base técnica, tú decides cómo quieres expresarla.',
     },
     {
-        question: '¿Hay algún compromiso de permanencia?',
-        answer: 'Ninguno. Creemos que te quedarás por la utilidad, no por obligación. Puedes cancelar tu suscripción en cualquier momento con un solo clic desde tu perfil. Mantendrás el acceso hasta que finalice tu ciclo de facturación pagado y podrás exportar todos tus datos antes de irte.',
+        question: '¿Qué ocurre si me quedo sin créditos antes de la renovación?',
+        answer: 'Si agotas los créditos puedes adelantar la renovación del plan y continuar trabajando sin interrupciones, o esperar al ciclo mensual. Además, estamos trabajando en un sistema de cupones de informes, pensado para ofrecer más flexibilidad sin depender de ampliaciones o micropagos.',
     },
     {
-        question: 'No soy muy tecnológico/a, ¿es difícil de usar?',
-        answer: 'Diseñamos INFORIA pensando en la "Sencillez Radical". Si sabes enviar un correo electrónico, sabes usar INFORIA. La interfaz es limpia, sin menús complicados. Además, los planes Profesional y Clínica incluyen soporte prioritario para ayudarte si alguna vez te atascas.',
+        question: '¿Necesito un ordenador potente o software específico para usar iNFORiA?',
+        answer: 'No. iNFORiA funciona desde el navegador en cualquier dispositivo moderno: ordenador, tablet o móvil. No requiere instalaciones ni configuraciones especiales. Solo necesitas conexión a internet y tu cuenta de Google Drive para almacenar la documentación. Esto hace que puedas trabajar desde la consulta, desde casa o entre sesiones con total comodidad.',
     },
     {
-        question: '¿Funciona bien con diferentes acentos o si hablo rápido?',
-        answer: 'Sí. Nuestro motor de transcripción es de última generación y entiende perfectamente español de España y las distintas variantes de Latinoamérica, incluso con ruido de fondo moderado o habla rápida. La precisión media es superior al 95%, captando matices que otras herramientas generalistas pierden.',
+        question: '¿Qué soporte tengo si necesito ayuda?',
+        answer: 'Encontrarás onboarding dentro de la herramienta, documentación actualizada y soporte directo por correo para cualquier duda. Nuestro objetivo es que no pierdas tiempo en configuraciones ni en procesos técnicos.',
+    },
+    {
+        question: '¿Por qué necesito una cuenta de Gmail para usar iNFORiA?',
+        answer: 'iNFORiA utiliza Google Drive como sistema seguro de almacenamiento para tus informes, historiales y documentos clínicos. Esto garantiza que toda tu información se guarde en tu propia cuenta, bajo tu control y sin que quede alojada en servidores externos, cumpliendo estrictamente con el RGPD. Por este motivo, actualmente es necesario disponer de una cuenta de Gmail o Google Workspace para operar con total seguridad. Dicho esto, estamos trabajando para incorporar nuevos proveedores de almacenamiento, como Outlook/OneDrive y otros servicios compatibles. El objetivo es que pronto puedas elegir dónde guardar tu documentación clínica sin depender de un único sistema. Cuando esté disponible, podrás cambiar de proveedor sin perder tus datos ni modificar tu flujo de trabajo.',
     },
 ];
 
 export function FAQSection() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
+    const [showBreakdown, setShowBreakdown] = useState(false);
 
     const toggleFAQ = (index: number) => {
         setOpenIndex(openIndex === index ? null : index);
@@ -92,13 +97,61 @@ export function FAQSection() {
                             </button>
 
                             <div
-                                className={`overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-96' : 'max-h-0'
+                                className={`overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-[800px]' : 'max-h-0'
                                     }`}
                             >
                                 <div className="px-8 pb-6 pt-2">
-                                    <p className="text-gray-700 leading-relaxed">
+                                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                                         {faq.answer}
                                     </p>
+                                    
+                                    {/* Desglose de créditos para la pregunta #2 */}
+                                    {index === 1 && (
+                                        <div className="mt-4">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowBreakdown(!showBreakdown);
+                                                }}
+                                                className="text-inforia-green font-bold hover:underline flex items-center gap-2"
+                                            >
+                                                {showBreakdown ? 'Ocultar desglose técnico' : 'Ver desglose técnico disponible'}
+                                                <ChevronDown className={`w-4 h-4 transition-transform ${showBreakdown ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            
+                                            {showBreakdown && (
+                                                <div className="mt-4 p-6 rounded-xl bg-gray-50 border border-gray-200 text-sm space-y-4">
+                                                    <div>
+                                                        <p className="font-bold text-inforia-green mb-2">1 Crédito — Sesión Estándar</p>
+                                                        <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                                                            <li>1 informe clínico (IA)</li>
+                                                            <li>1 grabación/audio</li>
+                                                            <li>Notas de sesión</li>
+                                                            <li>1 transcripción (50 min)</li>
+                                                            <li>1 archivo pequeño (txt/docx/pdf hasta 10 MB)</li>
+                                                        </ul>
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <p className="font-bold text-inforia-green mb-2">2 Créditos — Gestión Documental / Dossier</p>
+                                                        <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                                                            <li>Nuevo dossier clínico</li>
+                                                            <li>2 archivos pequeños extra</li>
+                                                            <li>1 archivo mediano (≈50 MB)</li>
+                                                        </ul>
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <p className="font-bold text-inforia-green mb-2">4 Créditos — Sesión Extendida / Compleja</p>
+                                                        <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                                                            <li>Sesión estándar completa</li>
+                                                            <li>Hasta ≈200 MB para audios de alta calidad o múltiples adjuntos pesados</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
