@@ -23,7 +23,7 @@ const FLASH_PLAN: PricingPlan = {
   reports: '5',
   users: '1',
   popular: true,
-  priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH || '',
+  priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH || process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID || '',
   features: [
     '5 Informes Completos',
     'Acceso total a todas las funciones',
@@ -40,7 +40,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     reports: '100',
     users: '1',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID || '',
     features: [
       '100 informes incluidos',
       'Gestión de agenda y pagos',
@@ -53,7 +53,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     reports: '200',
     users: '1',
     popular: true,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS || process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID || '',
     features: [
       '200 informes incluidos',
       'Todo lo del plan PRO',
@@ -66,7 +66,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     reports: '300',
     users: '3',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO || process.env.NEXT_PUBLIC_STRIPE_EQUIPO_PRICE_ID || '',
     features: [
       '300 informes incluidos',
       '3 Usuarios',
@@ -79,7 +79,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     reports: '400',
     users: '4',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || process.env.NEXT_PUBLIC_STRIPE_PRICE_CLINICA || '',
     features: [
       '400 informes incluidos',
       '4 Usuarios',
@@ -92,7 +92,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     reports: '500',
     users: '5',
     popular: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO || process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID || '',
     features: [
       '500 informes incluidos',
       '5 Usuarios',
@@ -106,7 +106,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     users: '6', // Base
     popular: false,
     isDynamic: true,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS || process.env.NEXT_PUBLIC_STRIPE_CENTRO_PLUS_PRICE_ID || '',
     features: [
       'Bolsa global de créditos',
       'Auditoría y control total',
@@ -123,13 +123,13 @@ function PricingContent() {
 
   // DEBUG: Verificar variables de entorno (Individualmente)
   console.log('--- DEBUG STRIPE START ---');
-  console.log('FLASH:', process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH);
-  console.log('PRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO);
-  console.log('PRO+:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS);
-  console.log('EQUIPO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO);
-  console.log('CLINICA:', process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID);
-  console.log('CENTRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO);
-  console.log('CENTRO_PLUS:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS);
+  console.log('FLASH:', process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH || process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID);
+  console.log('PRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID);
+  console.log('PRO+:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS || process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID);
+  console.log('EQUIPO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO || process.env.NEXT_PUBLIC_STRIPE_EQUIPO_PRICE_ID);
+  console.log('CLINICA:', process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || process.env.NEXT_PUBLIC_STRIPE_PRICE_CLINICA);
+  console.log('CENTRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO || process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID);
+  console.log('CENTRO_PLUS:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS || process.env.NEXT_PUBLIC_STRIPE_CENTRO_PLUS_PRICE_ID);
   console.log('--- DEBUG STRIPE END ---');
 
   // Todos los planes visibles
