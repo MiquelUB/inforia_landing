@@ -10,16 +10,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   typescript: true,
 });
 
-// Usamos Service Role para poder escribir en la tabla 'access_invitations' sin restricciones RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! 
-);
-
 const resend = new Resend(process.env.RESEND_API_KEY);
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
+  // Usamos Service Role para poder escribir en la tabla 'access_invitations' sin restricciones RLS
+  // Inicializamos dentro del handler para evitar errores en build time si faltan las env vars
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY! 
+  );
+
   const body = await req.text();
   const signature = (await headers()).get('stripe-signature')!;
 
