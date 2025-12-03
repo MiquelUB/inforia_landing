@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       const activationLink = `${saasUrl}/login?token=${token}`;
 
       // 7. Enviar Email Transaccional (Resend)
-      await resend.emails.send({
+      const emailResponse = await resend.emails.send({
         from: 'Inforia <hola@inforia.pro>', // ¡Verifica que este remitente esté autorizado en Resend!
         to: emailPago,
         subject: '🚀 Activa tu cuenta de Inforia',
@@ -110,13 +110,30 @@ export async function POST(req: Request) {
       });
 
       console.log(`✅ Invitación enviada a ${emailPago} con token ${token}`);
+      
+      return NextResponse.json({ 
+        received: true, 
+        status: 'success',
+        data: {
+          email: emailPago,
+          plan: planType,
+          credits: credits,
+          dbSaved: true,
+          emailId: emailResponse.data?.id,
+          emailError: emailResponse.error
+        }
+      });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error procesando invitación:', error);
       // Devolvemos 500 para que Stripe reintente si fue un error transitorio
-      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Internal Server Error', 
+        details: error.message,
+        stack: error.stack 
+      }, { status: 500 });
     }
   }
 
-  return NextResponse.json({ received: true });
+  return NextResponse.json({ received: true, status: 'ignored', reason: 'Event type not handled' });
 }
