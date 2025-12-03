@@ -14,12 +14,25 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // Solo permitimos los IDs que tú has configurado en el entorno
 const VALID_PRICE_IDS = [
   process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH,
+  process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID,
+  
   process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
+  process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID,
+  
   process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS,
+  process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID,
+  
   process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO,
+  process.env.NEXT_PUBLIC_STRIPE_EQUIPO_PRICE_ID,
+  
   process.env.NEXT_PUBLIC_STRIPE_PRICE_CLINICA,
+  process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID,
+  
   process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO,
+  process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID,
+  
   process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS,
+  process.env.NEXT_PUBLIC_STRIPE_CENTRO_PLUS_PRICE_ID,
 ].filter(Boolean); // Filtra undefineds si alguna variable falta
 
 export async function POST(req: Request) {
@@ -38,7 +51,8 @@ export async function POST(req: Request) {
     }
 
     // Validación específica para Centro Plus (Opcional, doble check de seguridad)
-    if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS && quantity < 6) {
+    const isCentroPlus = priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS || priceId === process.env.NEXT_PUBLIC_STRIPE_CENTRO_PLUS_PRICE_ID;
+    if (isCentroPlus && quantity < 6) {
       return NextResponse.json(
         { error: 'El plan Centro Plus requiere un mínimo de 6 usuarios.' },
         { status: 400 }
@@ -56,7 +70,7 @@ export async function POST(req: Request) {
         },
       ],
       // Detectar modo: Flash es pago único ("payment"), el resto son suscripciones ("subscription")
-      mode: priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH ? 'payment' : 'subscription',
+      mode: (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH || priceId === process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID) ? 'payment' : 'subscription',
       
       success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/?canceled=true`,
