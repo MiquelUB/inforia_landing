@@ -121,17 +121,6 @@ function PricingContent() {
   const searchParams = useSearchParams();
   const emailParam = searchParams.get('email');
 
-  // DEBUG: Verificar variables de entorno (Individualmente)
-  console.log('--- DEBUG STRIPE START ---');
-  console.log('FLASH:', process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH || process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID);
-  console.log('PRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID);
-  console.log('PRO+:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS || process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID);
-  console.log('EQUIPO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO || process.env.NEXT_PUBLIC_STRIPE_EQUIPO_PRICE_ID);
-  console.log('CLINICA:', process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || process.env.NEXT_PUBLIC_STRIPE_PRICE_CLINICA);
-  console.log('CENTRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO || process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID);
-  console.log('CENTRO_PLUS:', process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO_PLUS || process.env.NEXT_PUBLIC_STRIPE_CENTRO_PLUS_PRICE_ID);
-  console.log('--- DEBUG STRIPE END ---');
-
   // Todos los planes visibles
   const activePlans = [FLASH_PLAN, ...STANDARD_PLANS];
 
