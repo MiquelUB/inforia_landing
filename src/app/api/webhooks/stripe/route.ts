@@ -157,7 +157,8 @@ export async function POST(req: Request) {
         const activationLink = `${saasUrl}/login?token=${token}`;
 
         // 7. Enviar Email
-        await resend.emails.send({
+        // 7. Enviar Email
+        const { data: emailData, error: emailError } = await resend.emails.send({
           from: 'Inforia <onboarding@mail.inforia.pro>',
           to: emailPago,
           subject: '🚀 Activa tu cuenta de Inforia',
@@ -178,6 +179,16 @@ export async function POST(req: Request) {
             </div>
           `
         });
+
+        if (emailError) {
+          console.error('❌ Error enviando email (Resend):', emailError);
+          return NextResponse.json({ 
+            error: 'Error sending email', 
+            details: emailError 
+          }, { status: 500 });
+        }
+
+        console.log(`✅ Invitación enviada a ${emailPago} con token ${token}. ID: ${emailData?.id}`);
 
         console.log(`✅ Invitación enviada a ${emailPago} con token ${token}`);
 
