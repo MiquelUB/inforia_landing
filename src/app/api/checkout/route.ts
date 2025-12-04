@@ -77,9 +77,10 @@ export async function POST(req: Request) {
       
       // Metadatos clave para tu Webhook en Supabase
       metadata: {
+        priceId: priceId, // <--- CRÍTICO: El webhook busca 'priceId'
         planId: priceId,
         seats: quantity.toString(),
-        // Aquí podrías añadir userId si tienes autenticación previa
+        planType: 'flash', // Valor por defecto
       },
       
       // Recopilación de datos fiscales (NIF/DNI) automática
