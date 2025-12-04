@@ -198,13 +198,18 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ 
+      received: true, 
+      email_id: emailData?.id,
+      debug_key_used: process.env.RESEND_API_KEY?.substring(0, 5) + '...'
+    });
 
   } catch (error: any) {
     console.error('❌ Critical Error in Webhook:', error);
     return NextResponse.json({ 
       error: 'Critical Server Error', 
-      details: error.message 
+      details: error.message,
+      debug_key_used: process.env.RESEND_API_KEY?.substring(0, 5) + '...'
     }, { status: 500 });
   }
 }
