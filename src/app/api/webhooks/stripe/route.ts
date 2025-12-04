@@ -51,6 +51,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
     }
 
+    let emailId: string | undefined;
+
     // 4. Procesar Evento: Pago Completado
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -157,7 +159,6 @@ export async function POST(req: Request) {
         const activationLink = `${saasUrl}/login?token=${token}`;
 
         // 7. Enviar Email
-        // 7. Enviar Email
         const { data: emailData, error: emailError } = await resend.emails.send({
           from: 'Inforia <onboarding@mail.inforia.pro>',
           to: emailPago,
@@ -184,13 +185,13 @@ export async function POST(req: Request) {
           console.error('❌ Error enviando email (Resend):', emailError);
           return NextResponse.json({ 
             error: 'Error sending email', 
-            details: emailError 
+            details: emailError,
+            debug_key_used: process.env.RESEND_API_KEY?.substring(0, 5) + '...'
           }, { status: 500 });
         }
 
-        console.log(`✅ Invitación enviada a ${emailPago} con token ${token}. ID: ${emailData?.id}`);
-
-        console.log(`✅ Invitación enviada a ${emailPago} con token ${token}`);
+        emailId = emailData?.id;
+        console.log(`✅ Invitación enviada a ${emailPago} con token ${token}. ID: ${emailId}`);
 
       } catch (error) {
         console.error('❌ Error procesando invitación:', error);
@@ -200,7 +201,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       received: true, 
-      email_id: emailData?.id,
+      email_id: emailId,
       debug_key_used: process.env.RESEND_API_KEY?.substring(0, 5) + '...'
     });
 
