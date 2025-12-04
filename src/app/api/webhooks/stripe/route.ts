@@ -193,9 +193,13 @@ export async function POST(req: Request) {
         emailId = emailData?.id;
         console.log(`✅ Invitación enviada a ${emailPago} con token ${token}. ID: ${emailId}`);
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Error procesando invitación:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ 
+          error: 'Error processing invitation', 
+          details: error.message || error,
+          debug_key_used: process.env.RESEND_API_KEY?.substring(0, 5) + '...'
+        }, { status: 500 });
       }
     }
 
