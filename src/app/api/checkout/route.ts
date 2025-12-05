@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   try {
     // 3. Parsear el body
     const body = await req.json();
-    const { priceId, quantity = 1 } = body;
+    const { priceId, quantity = 1, email } = body;
 
     // 4. Validaciones
     if (!priceId || !VALID_PRICE_IDS.includes(priceId)) {
@@ -61,8 +61,25 @@ export async function POST(req: Request) {
 
     console.log(`📦 Creando sesión: Plan ${priceId} | Cantidad: ${quantity}`);
 
-    // 5. Crear Sesión de Checkout en Stripe
-    const session = await stripe.checkout.sessions.create({
+    // 4.b Buscar Cliente Existente
+    let customerId = undefined;
+    if (email) {
+      try {
+        const customers = await stripe.customers.list({
+          email: email,
+          limit: 1,
+        });
+        if (customers.data.length > 0) {
+          customerId = customers.data[0].id;
+          console.log(`✅ Cliente existente encontrado: ${customerId} (${email})`);
+        }
+      } catch (err) {
+        console.warn('Error buscando cliente por email, se procederá como nuevo cliente:', err);
+      }
+    }
+
+    // 5. Configurar Parámetros de la Sesión
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       line_items: [
         {
           price: priceId,
@@ -90,7 +107,19 @@ export async function POST(req: Request) {
       
       // Permitir códigos promocionales
       allow_promotion_codes: true,
-    });
+    };
+
+    // 6. Asignar Cliente o Email
+    if (customerId) {
+      sessionParams.customer = customerId;
+      // IMPORTANTE: Si pasas 'customer', NO puedes pasar 'customer_email' ni 'customer_creation'
+    } else if (email) {
+      sessionParams.customer_email = email;
+      sessionParams.customer_creation = 'always';
+    }
+
+    // 7. Crear Sesión
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     // 6. Retornar URL
     return NextResponse.json({ url: session.url });
