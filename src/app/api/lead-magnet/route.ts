@@ -12,6 +12,7 @@ type LeadMagnetPayload = z.infer<typeof LeadMagnetSchema>;
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚀 [LeadMagnet] Recibida petición POST en /api/lead-magnet');
     const body = await request.json();
 
     // Validar datos con Zod
@@ -20,22 +21,29 @@ export async function POST(request: NextRequest) {
     // Obtener el webhook URL de Make.com desde variables de entorno
     const makeWebhookUrl = process.env.MAKE_WEBHOOK_LEAD;
 
+    // Masked logging for security
+    const maskedUrl = makeWebhookUrl 
+      ? `${makeWebhookUrl.substring(0, 15)}...${makeWebhookUrl.substring(makeWebhookUrl.length - 5)}`
+      : 'UNDEFINED';
+
+    console.log(`🔍 [LeadMagnet] MAKE_WEBHOOK_LEAD: ${maskedUrl}`);
+
     if (!makeWebhookUrl) {
-      console.error('MAKE_WEBHOOK_LEAD no está configurado');
+      console.error('❌ [LeadMagnet] MAKE_WEBHOOK_LEAD no está configurado');
       return NextResponse.json(
         { error: 'Configuración del servidor incompleta' },
         { status: 500 }
       );
     }
 
-    console.log('🚀 Enviando a Make.com:', makeWebhookUrl);
-    console.log('📦 Payload:', {
+    console.log('📦 [LeadMagnet] Payload a enviar:', {
       ...validatedData,
       timestamp: new Date().toISOString(),
       source: 'landing-page',
     });
 
     // Enviar datos al webhook de Make.com
+    console.log('⏳ [LeadMagnet] Iniciando fetch a Make.com...');
     const makeResponse = await fetch(makeWebhookUrl, {
       method: 'POST',
       headers: {
@@ -48,11 +56,11 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    console.log('✅ Respuesta de Make:', makeResponse.status, makeResponse.statusText);
+    console.log(`✅ [LeadMagnet] Respuesta de Make: Status ${makeResponse.status} ${makeResponse.statusText}`);
 
     if (!makeResponse.ok) {
       const errorText = await makeResponse.text();
-      console.error(`❌ Error en Make.com: ${makeResponse.statusText}`, errorText);
+      console.error(`❌ [LeadMagnet] Error en Make.com: ${makeResponse.statusText}`, errorText);
       return NextResponse.json(
         { error: 'Error al procesar la solicitud' },
         { status: 500 }
@@ -60,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const makeData = await makeResponse.text();
-    console.log('📥 Datos de Make:', makeData);
+    console.log('📥 [LeadMagnet] Datos recibidos de Make:', makeData);
 
     return NextResponse.json(
       {
@@ -76,6 +84,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // Manejo de errores de validación de Zod
     if (error instanceof z.ZodError) {
+      console.warn('⚠️ [LeadMagnet] Error de validación Zod:', error.flatten());
       return NextResponse.json(
         {
           error: 'Datos inválidos',
@@ -85,7 +94,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error('Error en lead-magnet route:', error);
+    console.error('🔥 [LeadMagnet] Error interno no controlado:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
