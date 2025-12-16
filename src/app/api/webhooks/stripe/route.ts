@@ -143,8 +143,9 @@ export async function POST(req: Request) {
       if (dbError) throw dbError;
 
       // 6. Construir Enlace
-      const saasUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const activationLink = `${saasUrl}/login?token=${token}`;
+      // 6. Construir Enlace
+      // Validado: Todos los correos deben llevar a inforia.cat/login
+      const activationLink = `https://www.inforia.cat/login?token=${token}`;
 
       // 7. Enviar Email
       await resend.emails.send({
