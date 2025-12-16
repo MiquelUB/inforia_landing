@@ -100,7 +100,7 @@ export function LeadForm() {
             <div className="max-w-md mx-auto">
                 <div className="text-center mb-8">
                     <h2 className="text-4xl font-bold text-inforia-green mb-4">
-                        Solicita tu Demo Gratis
+                        Accede a la plataforma
                     </h2>
                     <p className="text-lg text-gray-600">
                         Descubre cómo INFORIA puede transformar tu práctica clínica
@@ -182,11 +182,11 @@ export function LeadForm() {
                         disabled={isSubmitting}
                         className="w-full py-4 rounded-xl font-bold text-inforia-green bg-background shadow-[5px_5px_10px_#d1cfcc,-5px_-5px_10px_#ffffff] hover:shadow-[3px_3px_6px_#d1cfcc,-3px_-3px_6px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1cfcc,inset_-3px_-3px_6px_#ffffff] transition-all duration-300 disabled:opacity-50"
                     >
-                        {isSubmitting ? 'Enviando...' : 'Solicitar Demo Gratis'}
+                        {isSubmitting ? 'Enviando...' : 'Accede a 5 informes'}
                     </button>
 
                     <p className="text-xs text-center text-gray-500">
-                        Sin compromiso. Respuesta en menos de 24 horas.
+                        Acceso inmediato · Respuesta en menos de 24 h
                     </p>
                 </form>
             </div>

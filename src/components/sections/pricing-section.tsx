@@ -25,7 +25,7 @@ const FLASH_PLAN: PricingPlan = {
   popular: true,
   priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_FLASH || process.env.NEXT_PUBLIC_STRIPE_FLASH_PRICE_ID || '',
   features: [
-    '5 Informes Completos',
+    '5 Créditos Completos',
     'Acceso total a todas las funciones',
     'Sin caducidad',
     'Pago único (sin suscripción)',
@@ -42,7 +42,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     popular: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || process.env.NEXT_PUBLIC_STRIPE_PROFESIONAL_PRICE_ID || '',
     features: [
-      '100 informes incluidos',
+      '100 Créditos incluidos',
       'Gestión de agenda y pagos',
       'Dossier clínico completo',
     ],
@@ -55,7 +55,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     popular: true,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_PLUS || process.env.NEXT_PUBLIC_STRIPE_DUO_PRICE_ID || '',
     features: [
-      '200 informes incluidos',
+      '200 Créditos incluidos',
       'Todo lo del plan PRO',
       'Prioridad en soporte',
     ],
@@ -68,7 +68,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     popular: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_EQUIPO || process.env.NEXT_PUBLIC_STRIPE_EQUIPO_PRICE_ID || '',
     features: [
-      '300 informes incluidos',
+      '300 Créditos incluidos',
       '3 Usuarios',
       'Panel de gestión de equipo',
     ],
@@ -81,7 +81,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     popular: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_CLINICA_PRICE_ID || process.env.NEXT_PUBLIC_STRIPE_PRICE_CLINICA || '',
     features: [
-      '400 informes incluidos',
+      '400 Créditos incluidos',
       '4 Usuarios',
       'Roles y permisos avanzados',
     ],
@@ -94,7 +94,7 @@ const STANDARD_PLANS: PricingPlan[] = [
     popular: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CENTRO || process.env.NEXT_PUBLIC_STRIPE_CENTRO_PRICE_ID || '',
     features: [
-      '500 informes incluidos',
+      '500 Créditos incluidos',
       '5 Usuarios',
       'API de integración',
     ],
@@ -221,7 +221,7 @@ function PricingContent() {
                       </button>
                     </div>
                     <p className="text-xs text-center text-gray-500 mt-2">
-                      {seats * 100} informes incluidos
+                      {seats * 100} Créditos incluidos
                     </p>
                   </div>
                 )}
@@ -230,7 +230,7 @@ function PricingContent() {
                   <div className="flex items-center gap-2 text-inforia-green font-bold text-sm">
                     <Gift className="w-4 h-4" />
                     <span>
-                      {plan.isDynamic ? `${seats * 100}` : plan.reports} {plan.isDynamic ? 'Informes' : (plan.name === 'PRO' || plan.name === 'PRO+' ? 'informes' : 'Informes')}
+                      {plan.isDynamic ? `${seats * 100}` : plan.reports} Créditos
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 text-sm">
